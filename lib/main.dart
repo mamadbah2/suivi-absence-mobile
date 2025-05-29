@@ -1,118 +1,144 @@
 import 'package:flutter/material.dart';
-import 'package:suivi_absence_mobile/views/pages/etudiant/etudiant_page.dart';
-import 'package:suivi_absence_mobile/views/pages/justification/justification_page.dart';
-import 'package:suivi_absence_mobile/views/pages/login/login_page.dart';
-import 'package:suivi_absence_mobile/views/pages/login/widgets/auth_wrapper.dart';
-import 'package:suivi_absence_mobile/views/pages/pointage/pointage_page.dart';
+import 'package:suivi_absence_mobile/views/pages/etudiant/widgets/etudiant_absence_list.dart';
+
 
 void main() {
-  runApp(const MyApp());
+  runApp(const SuiviAbsenceApp());
 }
 
-class MyApp extends StatelessWidget {
-  const MyApp({super.key});
+class SuiviAbsenceApp extends StatelessWidget {
+  const SuiviAbsenceApp({super.key});
 
-  // This widget is the root of your application.
   @override
   Widget build(BuildContext context) {
     return MaterialApp(
-      title: 'Suivi Absence',
+      debugShowCheckedModeBanner: false,
+      title: 'Suivi Absence ISM',
       theme: ThemeData(
-        colorScheme: ColorScheme.fromSeed(seedColor: Colors.deepPurple),
+        primarySwatch: MaterialColor(0xFF43291B, {
+          // ignore: deprecated_member_use
+          50: Color(0xFF43291B).withOpacity(0.1),
+          // ignore: deprecated_member_use
+          100: Color(0xFF43291B).withOpacity(0.2),
+          // ignore: deprecated_member_use
+          200: Color(0xFF43291B).withOpacity(0.3),
+          // ignore: deprecated_member_use
+          300: Color(0xFF43291B).withOpacity(0.4),
+          // ignore: deprecated_member_use
+          400: Color(0xFF43291B).withOpacity(0.5),
+          // ignore: deprecated_member_use
+          500: Color(0xFF43291B).withOpacity(0.6),
+          // ignore: deprecated_member_use
+          600: Color(0xFF43291B).withOpacity(0.7),
+          // ignore: deprecated_member_use
+          700: Color(0xFF43291B).withOpacity(0.8),
+          // ignore: deprecated_member_use
+          800: Color(0xFF43291B).withOpacity(0.9),
+          900: Color(0xFF43291B),
+        }),
+        colorScheme: ColorScheme.light(
+          primary: const Color(0xFF43291B), // Marron foncé ISM
+          secondary: const Color(0xFFF89620), // Orange ISM
+          surface: const Color(0xFFFAFAFA),
+        ),
+        appBarTheme: const AppBarTheme(
+          backgroundColor: Color(0xFF43291B),
+          foregroundColor: Colors.white,
+          elevation: 2,
+          centerTitle: true,
+          titleTextStyle: TextStyle(
+            fontSize: 20,
+            fontWeight: FontWeight.bold,
+          ),
+        ),
+        cardTheme: CardThemeData(
+          elevation: 2,
+          margin: const EdgeInsets.all(8),
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(10),
+          ),
+        ),
+        floatingActionButtonTheme: const FloatingActionButtonThemeData(
+          backgroundColor: Color(0xFF77491C), // Marron ISM
+          foregroundColor: Colors.white,
+        ),
+        snackBarTheme: const SnackBarThemeData(
+          backgroundColor: Color(0xFF43291B),
+          contentTextStyle: TextStyle(color: Colors.white),
+          actionTextColor: Color(0xFFF89620), // Orange ISM
+        ),
       ),
-      routes: {
-        "/pointage": (context) => PointagePage(),
-        "/login": (context) => LoginPage(),
-        "/justification": (context) => JustificationPage(),
-        "/etudiant": (context) => EtudiantPage()
-      },
-      home: const AuthWrapper(),
+      home: const HomePage(),
     );
   }
 }
 
-class MyHomePage extends StatefulWidget {
-  const MyHomePage({super.key, required this.title});
-
-  // This widget is the home page of your application. It is stateful, meaning
-  // that it has a State object (defined below) that contains fields that affect
-  // how it looks.
-
-  // This class is the configuration for the state. It holds the values (in this
-  // case the title) provided by the parent (in this case the App widget) and
-  // used by the build method of the State. Fields in a Widget subclass are
-  // always marked "final".
-
-  final String title;
-
-  @override
-  State<MyHomePage> createState() => _MyHomePageState();
-}
-
-class _MyHomePageState extends State<MyHomePage> {
-  int _counter = 0;
-
-  void _incrementCounter() {
-    setState(() {
-      // This call to setState tells the Flutter framework that something has
-      // changed in this State, which causes it to rerun the build method below
-      // so that the display can reflect the updated values. If we changed
-      // _counter without calling setState(), then the build method would not be
-      // called again, and so nothing would appear to happen.
-      _counter++;
-    });
-  }
+class HomePage extends StatelessWidget {
+  const HomePage({super.key});
 
   @override
   Widget build(BuildContext context) {
-    // This method is rerun every time setState is called, for instance as done
-    // by the _incrementCounter method above.
-    //
-    // The Flutter framework has been optimized to make rerunning build methods
-    // fast, so that you can just rebuild anything that needs updating rather
-    // than having to individually change instances of widgets.
     return Scaffold(
       appBar: AppBar(
-        // TRY THIS: Try changing the color here to a specific color (to
-        // Colors.amber, perhaps?) and trigger a hot reload to see the AppBar
-        // change color while the other colors stay the same.
-        backgroundColor: Theme.of(context).colorScheme.inversePrimary,
-        // Here we take the value from the MyHomePage object that was created by
-        // the App.build method, and use it to set our appbar title.
-        title: Text(widget.title),
+        title: const Text('Suivi des Absences ISM'),
       ),
       body: Center(
-        // Center is a layout widget. It takes a single child and positions it
-        // in the middle of the parent.
         child: Column(
-          // Column is also a layout widget. It takes a list of children and
-          // arranges them vertically. By default, it sizes itself to fit its
-          // children horizontally, and tries to be as tall as its parent.
-          //
-          // Column has various properties to control how it sizes itself and
-          // how it positions its children. Here we use mainAxisAlignment to
-          // center the children vertically; the main axis here is the vertical
-          // axis because Columns are vertical (the cross axis would be
-          // horizontal).
-          //
-          // TRY THIS: Invoke "debug painting" (choose the "Toggle Debug Paint"
-          // action in the IDE, or press "p" in the console), to see the
-          // wireframe for each widget.
           mainAxisAlignment: MainAxisAlignment.center,
-          children: <Widget>[
-            const Text('You have pushed the button this many times:'),
-            Text(
-              '$_counter',
-              style: Theme.of(context).textTheme.headlineMedium,
+          children: [
+            Image(
+              image: const AssetImage('assets/images/ism_logo.png'),
+              width: 150,
+              height: 150,
+            ),
+            const SizedBox(height: 40),
+            ElevatedButton(
+              onPressed: () {
+                Navigator.push(
+                  context,
+                  MaterialPageRoute(
+                    builder: (context) => EtudiantAbsenceList(),
+                  ),
+                );
+              },
+              style: ElevatedButton.styleFrom(
+                backgroundColor: const Color(0xFF43291B),
+                padding: const EdgeInsets.symmetric(horizontal: 32, vertical: 16),
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(8),
+                ),
+              ),
+              child: const Text(
+                'Gérer les Absences',
+                style: TextStyle(fontSize: 18, color: Colors.white),
+              ),
+            ),
+            const SizedBox(height: 20),
+            OutlinedButton(
+              onPressed: () {
+                // Navigation vers d'autres fonctionnalités
+              },
+              style: OutlinedButton.styleFrom(
+                side: const BorderSide(color: Color(0xFF43291B)),
+                padding: const EdgeInsets.symmetric(horizontal: 32, vertical: 16),
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(8),
+                ),
+              ),
+              child: const Text(
+                'Statistiques',
+                style: TextStyle(fontSize: 18, color: Color(0xFF43291B)),
+              ),
             ),
           ],
         ),
       ),
       floatingActionButton: FloatingActionButton(
-        onPressed: _incrementCounter,
-        tooltip: 'Increment',
-        child: const Icon(Icons.add),
-      ), // This trailing comma makes auto-formatting nicer for build methods.
+        onPressed: () {
+          // Action supplémentaire
+        },
+        child: const Icon(Icons.settings),
+      ),
     );
   }
 }
