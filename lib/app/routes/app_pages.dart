@@ -6,6 +6,7 @@ part 'app_routes.dart';
 
 class AppPages {
   static const INITIAL = Routes.LOGIN;
+  
 
   static final routes = [
     GetPage(
@@ -13,5 +14,10 @@ class AppPages {
       page: () => const LoginView(),
       binding: LoginBinding(),
     ),
+    GetPage(
+      name: Routes.POINTAGE,
+      page: () => const PointageView(),
+      binding: PointageBinding(),
+    )
   ];
 } 

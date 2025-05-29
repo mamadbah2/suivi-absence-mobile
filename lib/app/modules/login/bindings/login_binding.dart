@@ -5,6 +5,9 @@ import '../../../data/repositories/auth_repository.dart';
 import '../../../data/controllers/auth_controller.dart';
 
 class LoginBinding implements Bindings {
+
+  //Le binding est le lien entre le controller et le provider et le repository
+  //Get.put() est une fonction pour injecter les dépendances dans le controller il est garde en memoire avec permanent: true
   @override
   void dependencies() {
     // Controllers globaux

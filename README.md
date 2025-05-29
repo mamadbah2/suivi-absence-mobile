@@ -1,17 +1,67 @@
-# suivi_absence_mobile
+# Suivi Absence Mobile
 
-A new Flutter project.
+Application mobile de suivi des absences développée avec Flutter et GetX.
 
-## Getting Started
+## 🚀 Fonctionnalités
 
-This project is a starting point for a Flutter application.
+- Authentification des utilisateurs
+- Gestion des pointages
+- Interface moderne et responsive
 
-A few resources to get you started if this is your first Flutter project:
+## 📱 Screenshots
 
-- [Lab: Write your first Flutter app](https://docs.flutter.dev/get-started/codelab)
-- [Cookbook: Useful Flutter samples](https://docs.flutter.dev/cookbook)
+Pas encore disponible
 
-For help getting started with Flutter development, view the
-[online documentation](https://docs.flutter.dev/), which offers tutorials,
-samples, guidance on mobile development, and a full API reference.
-# suivi-absence-mobile
+## 🛠 Technologies Utilisées
+
+- Flutter
+- GetX pour la gestion d'état
+- Architecture MVC+S
+
+## 🏗 Architecture du Projet
+
+```
+lib/
+  ├── app/
+  │   ├── data/
+  │   │   ├── controllers     # Données Globales
+  |   |   ├── models/         # Modèles de données
+  │   │   ├── providers/      # Communication API
+  │   │   └── repositories/   # Logique métier
+  │   ├── modules/
+  │   │   ├── login/         # Module de connexion
+  │   │   └── pointage/      # Module de pointage
+  │   └── routes/            # Configuration des routes
+  └── main.dart
+```
+
+## 🚦 Pour Commencer
+
+1. Clonez le repository
+```bash
+git clone https://github.com/votre-username/suivi-absence-mobile
+```
+
+2. Installez les dépendances
+```bash
+flutter pub get
+```
+
+3. Lancez l'application
+```bash
+flutter run
+```
+
+## 📝 Configuration
+
+Pour la configuration de l'API, modifiez le fichier `lib/app/data/providers/auth_provider.dart`
+
+## 👥 Contributeurs
+
+- Fatima KEITA
+- Anna NDIAYE
+- Mamadou Bobo BAH
+- Adja Mariem KEITA
+- Fatoumata Binetou aidel KABIR
+- Ameth Touré
+- Ousmane BA
