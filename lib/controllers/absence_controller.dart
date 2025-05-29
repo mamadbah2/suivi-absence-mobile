@@ -5,9 +5,11 @@ class AbsenceController extends GetxController {
   final _isLoading = false.obs;
   final _error = RxnString();
   final _absencesDuJour = <Absence>[].obs;
+  final _historiqueAbsences = <Absence>[].obs;
   String? _currentMatricule;
 
   List<Absence> get absencesDuJour => _absencesDuJour;
+  List<Absence> get historiqueAbsences => _historiqueAbsences;
   bool get isLoading => _isLoading.value;
   String? get error => _error.value;
 
@@ -79,6 +81,59 @@ class AbsenceController extends GetxController {
     } catch (e) {
       _error.value =
           "Erreur lors de la récupération des absences: ${e.toString()}";
+    } finally {
+      _isLoading.value = false;
+    }
+  }
+
+  Future<void> getHistoriqueAbsences(String matricule) async {
+    try {
+      _isLoading.value = true;
+      _error.value = null;
+      _currentMatricule = matricule;
+
+      // Simuler la récupération de l'historique des absences
+      _historiqueAbsences.value = [
+        Absence(
+          id: "1",
+          nom: "John",
+          prenom: "Doe",
+          classe: "L1",
+          module: "Mathématiques",
+          date: DateTime.now().subtract(Duration(days: 1)),
+          heure: "08:00-10:00",
+          status: "Non justifié",
+          justification: "",
+          justificatif: "",
+        ),
+        Absence(
+          id: "2",
+          nom: "John",
+          prenom: "Doe",
+          classe: "L1",
+          module: "Physique",
+          date: DateTime.now().subtract(Duration(days: 2)),
+          heure: "10:30-12:30",
+          status: "Justifié",
+          justification: "Certificat médical",
+          justificatif: "certificat.pdf",
+        ),
+        Absence(
+          id: "3",
+          nom: "John",
+          prenom: "Doe",
+          classe: "L1",
+          module: "Informatique",
+          date: DateTime.now().subtract(Duration(days: 3)),
+          heure: "14:00-16:00",
+          status: "Non justifié",
+          justification: "",
+          justificatif: "",
+        ),
+      ];
+    } catch (e) {
+      _error.value =
+          "Erreur lors de la récupération de l'historique des absences: ${e.toString()}";
     } finally {
       _isLoading.value = false;
     }

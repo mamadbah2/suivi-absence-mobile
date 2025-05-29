@@ -68,6 +68,28 @@ class EtudiantHomePage extends StatelessWidget {
                   ),
                   AbsenceStatsRow(stats: controller.stats),
                   Padding(
+                    padding: EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+                    child: ElevatedButton(
+                      onPressed: () {
+                        Get.toNamed(
+                          '/historique-absences',
+                          arguments: controller.matricule.value,
+                        );
+                      },
+                      style: ElevatedButton.styleFrom(
+                        backgroundColor: Color(0xFF5B3926),
+                        minimumSize: Size(double.infinity, 45),
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(8),
+                        ),
+                      ),
+                      child: Text(
+                        'Voir l\'historique des absences',
+                        style: TextStyle(color: Colors.white, fontSize: 16),
+                      ),
+                    ),
+                  ),
+                  Padding(
                     padding: EdgeInsets.symmetric(horizontal: 16, vertical: 16),
                     child: Text(
                       "Absences du jour",
