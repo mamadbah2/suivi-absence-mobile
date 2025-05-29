@@ -1,11 +1,16 @@
 import 'package:flutter/material.dart';
-import 'package:suivi_absence_mobile/views/pages/etudiant/etudiant_page.dart';
-import 'package:suivi_absence_mobile/views/pages/justification/justification_page.dart';
-import 'package:suivi_absence_mobile/views/pages/login/login_page.dart';
-import 'package:suivi_absence_mobile/views/pages/pointage/pointage_page.dart';
-import 'package:suivi_absence_mobile/views/pages/qrcode/qrcode_page.dart';
+import 'package:get/get.dart';
+import 'views/pages/etudiant/etudiant_page.dart';
+import 'views/pages/justification/justification_page.dart';
+import 'views/pages/login/login_page.dart';
+import 'views/pages/pointage/pointage_page.dart';
+import 'views/pages/qrcode/qrcode_page.dart';
+import 'services/etudiant_service.dart';
 
 void main() {
+  // Initialiser les services
+  Get.put(EtudiantService());
+
   runApp(const MyApp());
 }
 
@@ -15,7 +20,7 @@ class MyApp extends StatelessWidget {
   // This widget is the root of your application.
   @override
   Widget build(BuildContext context) {
-    return MaterialApp(
+    return GetMaterialApp(
       title: 'Suivi Absence',
       debugShowCheckedModeBanner: false,
       theme: ThemeData(
@@ -25,8 +30,9 @@ class MyApp extends StatelessWidget {
         "/pointage": (context) => PointagePage(),
         "/login": (context) => LoginPage(),
         "/justification": (context) => JustificationPage(),
-        "/qrcode": (context) => QrCodePage(
-              studentName: "Issa KABORE",
+        "/qrcode":
+            (context) => QrCodePage(
+              studentName: "Anna",
               studentMatricule: "DK-30352",
               photoUrl: "assets/images/student_photo.jpeg",
             ),

@@ -1,66 +1,101 @@
 import 'package:get/get.dart';
-import '../models/absence.dart';
+import '../services/etudiant_service.dart';
 
 class EtudiantController extends GetxController {
-  // Informations de l'étudiant (à adapter selon ton backend)
-  var nom = ''.obs;
-  var prenom = ''.obs;
-  var classe = ''.obs;
+  final EtudiantService _service = Get.find<EtudiantService>();
 
-  // Liste des absences
-  var absences = <Absence>[].obs;
+  // État de l'étudiant
+  final studentName = ''.obs;
+  final photoUrl = ''.obs;
+  final filiere = ''.obs;
+  final matricule = ''.obs;
+  final email = ''.obs;
+  final telephone = ''.obs;
+  final annee = ''.obs;
+  final semestre = ''.obs;
 
-  // États de chargement et d’erreur
-  var isLoading = false.obs;
-  var errorMessage = ''.obs;
+  // État des statistiques
+  final stats = <Map<String, String>>[].obs;
 
-  // Exemple de chargement des données (à remplacer par un appel API plus tard)
-  Future<void> fetchAbsences() async {
+  // État des cours
+  final courses = <Map<String, dynamic>>[].obs;
+
+  // État de l'historique
+  final absenceHistory = <Map<String, dynamic>>[].obs;
+
+  // États de chargement
+  final isLoading = false.obs;
+  final errorMessage = ''.obs;
+
+  @override
+  void onInit() {
+    super.onInit();
+    loadStudentData();
+  }
+
+  Future<void> loadStudentData() async {
     try {
       isLoading.value = true;
       errorMessage.value = '';
 
-      // Simule une réponse du backend
-      await Future.delayed(Duration(seconds:1));
-      List<Absence> fetched = [
-        Absence(
-          id: '1',
-          nom: 'Ndiaye',
-          prenom: 'Anna',
-          classe: 'Licence 2 GLRS',
-          module: 'Développement Flutter',
-          date: DateTime(2024, 3, 14),
-          heure: '8h - 12h',
-          status: 'Absence',
-          justification: 'Non justifiée',
-          justificatif: '',
-        ),
-        Absence(
-          id: '2',
-          nom: 'Ndiaye',
-          prenom: 'Anna',
-          classe: 'Licence 2 GLRS',
-          module: 'Gestion de Projet',
-          date: DateTime(2024, 3, 14),
-          heure: '13h - 15h',
-          status: 'Absence',
-          justification: 'Justifiée',
-          justificatif: 'certificat.pdf',
-        ),
-      ];
+      // Charger les informations de l'étudiant
+      final studentInfo = await _service.getStudentInfo();
+      studentName.value = '${studentInfo['prenom']} ${studentInfo['nom']}';
+      photoUrl.value = studentInfo['photoUrl'];
+      filiere.value = studentInfo['filiere'];
+      matricule.value = studentInfo['matricule'];
+      email.value = studentInfo['email'];
+      telephone.value = studentInfo['telephone'];
+      annee.value = studentInfo['annee'];
+      semestre.value = studentInfo['semestre'];
 
-      absences.assignAll(fetched);
+      // Charger les statistiques
+      final absenceStats = await _service.getAbsenceStats();
+      stats.assignAll(absenceStats);
 
-      // Met à jour les infos de l'étudiant à partir de la première absence (exemple)
-      if (fetched.isNotEmpty) {
-        nom.value = fetched[0].nom;
-        prenom.value = fetched[0].prenom;
-        classe.value = fetched[0].classe;
-      }
+      // Charger les cours du jour
+      final todayCourses = await _service.getTodayCourses();
+      courses.assignAll(todayCourses);
+
+      // Charger l'historique des absences
+      final history = await _service.getAbsenceHistory();
+      absenceHistory.assignAll(history);
     } catch (e) {
-      errorMessage.value = 'Erreur lors du chargement des absences';
+      errorMessage.value = 'Erreur lors du chargement des données';
     } finally {
       isLoading.value = false;
     }
+  }
+
+  Future<void> handleLogout() async {
+    try {
+      isLoading.value = true;
+      await _service.logout();
+      // Rediriger vers la page de connexion
+      Get.offAllNamed('/login');
+    } catch (e) {
+      errorMessage.value = 'Erreur lors de la déconnexion';
+    } finally {
+      isLoading.value = false;
+    }
+  }
+
+  // Méthode pour rafraîchir les données
+  Future<void> refreshData() async {
+    await loadStudentData();
+  }
+
+  // Méthode pour obtenir le nombre total d'absences
+  int get totalAbsences {
+    return courses
+        .where((course) => course['type'].toString().contains('Absence'))
+        .length;
+  }
+
+  // Méthode pour obtenir le nombre total de retards
+  int get totalRetards {
+    return courses
+        .where((course) => course['type'].toString().contains('Retard'))
+        .length;
   }
 }

@@ -2,7 +2,7 @@ import 'package:flutter/material.dart';
 import 'course_card.dart';
 
 class TodaySection extends StatelessWidget {
-  final List<Map<String, String>> courses;
+  final List<Map<String, dynamic>> courses;
 
   const TodaySection({Key? key, required this.courses}) : super(key: key);
 
@@ -24,7 +24,11 @@ class TodaySection extends StatelessWidget {
             type: course['type']!,
             date: course['date']!,
             time: course['time']!,
-            isJustified: course['isJustified'] == 'true',
+            professeur: course['professeur']!,
+            salle: course['salle']!,
+            module: course['module']!,
+            isJustified: course['isJustified'] as bool,
+            justification: course['justification'],
           ),
         ),
       ],

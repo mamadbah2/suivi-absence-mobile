@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:get/get.dart';
 import 'package:qr_flutter/qr_flutter.dart';
 
 class StudentInfoCard extends StatelessWidget {
@@ -43,16 +44,27 @@ class StudentInfoCard extends StatelessWidget {
             style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold),
           ),
           SizedBox(height: 8),
-          Container(
-            padding: EdgeInsets.all(8),
-            decoration: BoxDecoration(
-              color: Colors.white,
-              borderRadius: BorderRadius.circular(12),
-            ),
-            child: QrImageView(
-              data: qrData,
-              version: QrVersions.auto,
-              size: 100.0,
+          GestureDetector(
+            onTap:
+                () => Get.toNamed(
+                  '/qrcode',
+                  arguments: {
+                    'studentName': matricule.split('-')[0],
+                    'studentMatricule': matricule,
+                    'photoUrl': 'assets/images/student_photo.jpg',
+                  },
+                ),
+            child: Container(
+              padding: EdgeInsets.all(8),
+              decoration: BoxDecoration(
+                color: Colors.white,
+                borderRadius: BorderRadius.circular(12),
+              ),
+              child: QrImageView(
+                data: qrData,
+                version: QrVersions.auto,
+                size: 100.0,
+              ),
             ),
           ),
         ],
