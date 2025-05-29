@@ -2,11 +2,9 @@ import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import '../../../controllers/etudiant_controller.dart';
 import '../../../controllers/absence_controller.dart';
-import '../../../models/absence.dart';
 import 'widgets/student_home_header.dart';
 import 'widgets/student_info_card.dart';
 import 'widgets/absence_stats_row.dart';
-import 'widgets/course_card.dart';
 import 'widgets/absence_du_jour_card.dart';
 
 class EtudiantHomePage extends StatelessWidget {
@@ -80,64 +78,48 @@ class EtudiantHomePage extends StatelessWidget {
                       ),
                     ),
                   ),
-                  Column(
-                    children: [
-                      AbsenceDuJourCard(
-                        absence: Absence(
-                          id: "1",
-                          nom: "John",
-                          prenom: "Doe",
-                          classe: "L1",
-                          module: "Mathématiques",
-                          date: DateTime.now(),
-                          heure: "08:00-10:00",
-                          status: "Non justifié",
-                          justification: "",
-                          justificatif: "",
+                  Obx(() {
+                    if (absenceController.isLoading) {
+                      return Center(child: CircularProgressIndicator());
+                    }
+
+                    if (absenceController.error != null) {
+                      return Center(
+                        child: Padding(
+                          padding: EdgeInsets.all(16),
+                          child: Text(
+                            absenceController.error!,
+                            style: TextStyle(color: Colors.red),
+                          ),
                         ),
-                        onToggleAbsence: () {},
-                      ),
-                      AbsenceDuJourCard(
-                        absence: Absence(
-                          id: "2",
-                          nom: "John",
-                          prenom: "Doe",
-                          classe: "L1",
-                          module: "Physique",
-                          date: DateTime.now(),
-                          heure: "10:30-12:30",
-                          status: "Justifié",
-                          justification: "Certificat médical",
-                          justificatif: "certificat.pdf",
+                      );
+                    }
+
+                    if (absenceController.absencesDuJour.isEmpty) {
+                      return Center(
+                        child: Padding(
+                          padding: EdgeInsets.all(16),
+                          child: Text(
+                            "Aucune absence aujourd'hui",
+                            style: TextStyle(color: Colors.grey[600]),
+                          ),
                         ),
-                        onToggleAbsence: () {},
-                      ),
-                    ],
-                  ),
-                  Padding(
-                    padding: EdgeInsets.symmetric(horizontal: 16, vertical: 16),
-                    child: Text(
-                      "Cours du jour",
-                      style: TextStyle(
-                        fontSize: 18,
-                        fontWeight: FontWeight.bold,
-                        color: Color(0xFF5B3926),
-                      ),
-                    ),
-                  ),
-                  ...controller.courses.map(
-                    (course) => CourseCard(
-                      title: course['title'],
-                      type: course['type'],
-                      date: course['date'],
-                      time: course['time'],
-                      professeur: course['professeur'],
-                      salle: course['salle'],
-                      module: course['module'],
-                      isJustified: course['isJustified'],
-                      justification: course['justification'],
-                    ),
-                  ),
+                      );
+                    }
+
+                    return Column(
+                      children:
+                          absenceController.absencesDuJour.map((absence) {
+                            return AbsenceDuJourCard(
+                              absence: absence,
+                              onToggleAbsence:
+                                  () => absenceController.toggleAbsence(
+                                    int.parse(absence.id),
+                                  ),
+                            );
+                          }).toList(),
+                    );
+                  }),
                 ],
               ),
             ),

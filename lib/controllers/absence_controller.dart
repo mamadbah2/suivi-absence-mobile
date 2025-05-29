@@ -1,19 +1,47 @@
 import 'package:get/get.dart';
-import 'package:logger/logger.dart';
 import 'package:suivi_absence_mobile/models/absence.dart';
-import 'package:suivi_absence_mobile/services/absence_service.dart';
 
 class AbsenceController extends GetxController {
-  final AbsenceService _absenceService = AbsenceService();
-  final _logger = Logger();
-  final _absencesDuJour = <Absence>[].obs;
   final _isLoading = false.obs;
   final _error = RxnString();
+  final _absencesDuJour = <Absence>[].obs;
   String? _currentMatricule;
 
   List<Absence> get absencesDuJour => _absencesDuJour;
   bool get isLoading => _isLoading.value;
   String? get error => _error.value;
+
+  @override
+  void onInit() {
+    super.onInit();
+    // Initialiser avec des données statiques
+    _absencesDuJour.value = [
+      Absence(
+        id: "1",
+        nom: "John",
+        prenom: "Doe",
+        classe: "L1",
+        module: "Mathématiques",
+        date: DateTime.now(),
+        heure: "08:00-10:00",
+        status: "Non justifié",
+        justification: "",
+        justificatif: "",
+      ),
+      Absence(
+        id: "2",
+        nom: "John",
+        prenom: "Doe",
+        classe: "L1",
+        module: "Physique",
+        date: DateTime.now(),
+        heure: "10:30-12:30",
+        status: "Justifié",
+        justification: "Certificat médical",
+        justificatif: "certificat.pdf",
+      ),
+    ];
+  }
 
   Future<void> getAbsencesDuJour(String matricule) async {
     try {
@@ -21,18 +49,33 @@ class AbsenceController extends GetxController {
       _error.value = null;
       _currentMatricule = matricule;
 
-      final today = DateTime.now();
-      final absence = await _absenceService.getAbsencesDuJourParEtudiant(
-        today,
-        matricule,
-      );
-      _logger.d('Absence du jour: $absence');
-
-      if (absence.isNotEmpty) {
-        _absencesDuJour.value = absence;
-      } else {
-        _absencesDuJour.value = [];
-      }
+      // Utiliser les données statiques au lieu d'appeler le service
+      _absencesDuJour.value = [
+        Absence(
+          id: "1",
+          nom: "John",
+          prenom: "Doe",
+          classe: "L1",
+          module: "Mathématiques",
+          date: DateTime.now(),
+          heure: "08:00-10:00",
+          status: "Non justifié",
+          justification: "",
+          justificatif: "",
+        ),
+        Absence(
+          id: "2",
+          nom: "John",
+          prenom: "Doe",
+          classe: "L1",
+          module: "Physique",
+          date: DateTime.now(),
+          heure: "10:30-12:30",
+          status: "Justifié",
+          justification: "Certificat médical",
+          justificatif: "certificat.pdf",
+        ),
+      ];
     } catch (e) {
       _error.value =
           "Erreur lors de la récupération des absences: ${e.toString()}";
@@ -46,11 +89,25 @@ class AbsenceController extends GetxController {
       _isLoading.value = true;
       _error.value = null;
 
-      await _absenceService.toggleAbsence(idAbsence);
-
-      // Rafraîchir la liste des absences après la modification
-      if (_currentMatricule != null) {
-        await getAbsencesDuJour(_currentMatricule!);
+      // Simuler la modification d'une absence
+      final index = _absencesDuJour.indexWhere(
+        (a) => a.id == idAbsence.toString(),
+      );
+      if (index != -1) {
+        final absence = _absencesDuJour[index];
+        final updatedAbsence = Absence(
+          id: absence.id,
+          nom: absence.nom,
+          prenom: absence.prenom,
+          classe: absence.classe,
+          module: absence.module,
+          date: absence.date,
+          heure: absence.heure,
+          status: absence.status == "Justifié" ? "Non justifié" : "Justifié",
+          justification: absence.justification,
+          justificatif: absence.justificatif,
+        );
+        _absencesDuJour[index] = updatedAbsence;
       }
     } catch (e) {
       _error.value =
