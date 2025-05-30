@@ -9,8 +9,8 @@ void main() {
   runApp(const MyApp());
 }
 
-class MyApp extends StatelessWidget {
-  const MyApp({super.key});
+class SuiviAbsenceApp extends StatelessWidget {
+  const SuiviAbsenceApp({super.key});
 
   @override
   Widget build(BuildContext context) {
