@@ -1,7 +1,6 @@
 import 'package:get/get.dart';
 import '../controllers/login_controller.dart';
 import '../../../data/providers/auth_provider.dart';
-import '../../../data/repositories/auth_repository.dart';
 import '../../../data/controllers/auth_controller.dart';
 
 class LoginBinding implements Bindings {
@@ -11,17 +10,16 @@ class LoginBinding implements Bindings {
   @override
   void dependencies() {
     // Controllers globaux
+    // Ensure AuthController is registered before AuthRepository if it's a dependency
     Get.put(AuthController(), permanent: true);
     
     // Providers
     Get.put(AuthProvider(), permanent: true);
     
-    // Repositories
-    Get.put(AuthRepository(), permanent: true);
-    
     // Controllers de page
-    Get.put(LoginController());
+    // Pass AuthProvider directly to LoginController
+    Get.put(LoginController(Get.find<AuthProvider>(), Get.find<AuthController>()));
     
     print('LoginBinding initialized');
   }
-} 
+}

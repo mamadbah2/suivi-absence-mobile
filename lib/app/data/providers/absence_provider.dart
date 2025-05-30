@@ -1,25 +1,22 @@
-import 'package:get/get.dart';
-import 'package:suivi_absence_mobile/models/absence.dart';
+import 'package:flutter/material.dart';
+import 'package:suivi_absence_mobile/app/data/models/absence.dart';
 
-class AbsenceController extends GetxController {
-  final _isLoading = false.obs;
-  final _error = RxnString();
-  final _absencesDuJour = <Absence>[].obs;
-  final _historiqueAbsences = <Absence>[].obs;
-  String? _currentMatricule;
+class AbsenceProvider extends ChangeNotifier {
+  bool _isLoading = false;
+  String? _error;
+  List<Absence> _absencesDuJour = [];
+  List<Absence> _historiqueAbsences = [];
 
   List<Absence> get absencesDuJour => _absencesDuJour;
   List<Absence> get historiqueAbsences => _historiqueAbsences;
-  bool get isLoading => _isLoading.value;
-  String? get error => _error.value;
+  bool get isLoading => _isLoading;
+  String? get error => _error;
 
-  @override
-  void onInit() {
-    super.onInit();
-    // Initialiser avec des données statiques
-    _absencesDuJour.value = [
+  AbsenceProvider() {
+    _absencesDuJour = [
       Absence(
         id: "1",
+        matricule: "2021001",
         nom: "John",
         prenom: "Doe",
         classe: "L1",
@@ -31,6 +28,7 @@ class AbsenceController extends GetxController {
         justificatif: "",
       ),
       Absence(
+        matricule: "2021002",
         id: "2",
         nom: "John",
         prenom: "Doe",
@@ -47,13 +45,14 @@ class AbsenceController extends GetxController {
 
   Future<void> getAbsencesDuJour(String matricule) async {
     try {
-      _isLoading.value = true;
-      _error.value = null;
-      _currentMatricule = matricule;
+      _isLoading = true;
+      _error = null;
+      notifyListeners();
 
-      // Utiliser les données statiques au lieu d'appeler le service
-      _absencesDuJour.value = [
+      await Future.delayed(const Duration(milliseconds: 500));
+      _absencesDuJour = [
         Absence(
+          matricule: "2021001",
           id: "1",
           nom: "John",
           prenom: "Doe",
@@ -67,6 +66,7 @@ class AbsenceController extends GetxController {
         ),
         Absence(
           id: "2",
+          matricule: "2021002",
           nom: "John",
           prenom: "Doe",
           classe: "L1",
@@ -79,28 +79,29 @@ class AbsenceController extends GetxController {
         ),
       ];
     } catch (e) {
-      _error.value =
-          "Erreur lors de la récupération des absences: ${e.toString()}";
+      _error = "Erreur lors de la récupération des absences: ${e.toString()}";
     } finally {
-      _isLoading.value = false;
+      _isLoading = false;
+      notifyListeners();
     }
   }
 
   Future<void> getHistoriqueAbsences(String matricule) async {
     try {
-      _isLoading.value = true;
-      _error.value = null;
-      _currentMatricule = matricule;
+      _isLoading = true;
+      _error = null;
+      notifyListeners();
 
-      // Simuler la récupération de l'historique des absences
-      _historiqueAbsences.value = [
+      await Future.delayed(const Duration(milliseconds: 500));
+      _historiqueAbsences = [
         Absence(
           id: "1",
+          matricule: "2021001",
           nom: "John",
           prenom: "Doe",
           classe: "L1",
           module: "Mathématiques",
-          date: DateTime.now().subtract(Duration(days: 1)),
+          date: DateTime.now().subtract(const Duration(days: 1)),
           heure: "08:00-10:00",
           status: "Non justifié",
           justification: "",
@@ -108,11 +109,12 @@ class AbsenceController extends GetxController {
         ),
         Absence(
           id: "2",
+          matricule: "2021002",
           nom: "John",
           prenom: "Doe",
           classe: "L1",
           module: "Physique",
-          date: DateTime.now().subtract(Duration(days: 2)),
+          date: DateTime.now().subtract(const Duration(days: 2)),
           heure: "10:30-12:30",
           status: "Justifié",
           justification: "Certificat médical",
@@ -120,11 +122,12 @@ class AbsenceController extends GetxController {
         ),
         Absence(
           id: "3",
+          matricule: "2021003",
           nom: "John",
           prenom: "Doe",
           classe: "L1",
           module: "Informatique",
-          date: DateTime.now().subtract(Duration(days: 3)),
+          date: DateTime.now().subtract(const Duration(days: 3)),
           heure: "14:00-16:00",
           status: "Non justifié",
           justification: "",
@@ -132,19 +135,20 @@ class AbsenceController extends GetxController {
         ),
       ];
     } catch (e) {
-      _error.value =
-          "Erreur lors de la récupération de l'historique des absences: ${e.toString()}";
+      _error = "Erreur lors de la récupération de l'historique des absences: ${e.toString()}";
     } finally {
-      _isLoading.value = false;
+      _isLoading = false;
+      notifyListeners();
     }
   }
 
   Future<void> toggleAbsence(int idAbsence) async {
     try {
-      _isLoading.value = true;
-      _error.value = null;
-
-      // Simuler la modification d'une absence
+      _isLoading = true;
+      _error = null;
+      notifyListeners();
+      
+      await Future.delayed(const Duration(milliseconds: 300));
       final index = _absencesDuJour.indexWhere(
         (a) => a.id == idAbsence.toString(),
       );
@@ -152,6 +156,7 @@ class AbsenceController extends GetxController {
         final absence = _absencesDuJour[index];
         final updatedAbsence = Absence(
           id: absence.id,
+          matricule: absence.matricule,
           nom: absence.nom,
           prenom: absence.prenom,
           classe: absence.classe,
@@ -165,10 +170,10 @@ class AbsenceController extends GetxController {
         _absencesDuJour[index] = updatedAbsence;
       }
     } catch (e) {
-      _error.value =
-          "Erreur lors de la modification de l'absence: ${e.toString()}";
+      _error = "Erreur lors de la modification de l'absence: ${e.toString()}";
     } finally {
-      _isLoading.value = false;
+      _isLoading = false;
+      notifyListeners();
     }
   }
 }

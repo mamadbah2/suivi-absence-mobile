@@ -1,4 +1,5 @@
 import 'package:get/get.dart';
+import '../models/user_model.dart';
 
 class AuthProvider extends GetConnect {
   @override
@@ -8,29 +9,22 @@ class AuthProvider extends GetConnect {
     super.onInit();
   }
 
-  Future<Response> login(String email, String password) async {
+  Future<UserModel> login(String email, String password) async {
     print('AuthProvider: Tentative de connexion');
-  
-    await Future.delayed(const Duration(seconds: 2));
-    //Pour faire une petite simulation de connexion
-    //Dans les normes le back doit me retourner l'entite user
+
+    await Future.delayed(const Duration(seconds: 1));
+
     if (email == 'test@test.com' && password == 'password') {
-      return Response(
-        body: {
-          'id': '1',
-          'nom': 'Doe',
-          'prenom': 'Fatima',
-          'email': email,
-          'password': password,
-          'role': 'admin',
-        },
-        statusCode: 200,
-      );
+      final userData = {
+        'id': '1',
+        'nom': 'Doe',
+        'prenom': 'Fatima',
+        'email': email,
+        'role': 'admin',
+      };
+      return UserModel.fromJson(userData);
     }
-    
-    return Response(
-      body: {'message': 'Invalid credentials'},
-      statusCode: 401,
-    );
+
+    throw Exception('Identifiants invalides');
   }
-} 
+}

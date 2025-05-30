@@ -4,7 +4,7 @@ import 'app/routes/app_pages.dart';
 
 void main() {
   // Initialiser les services
-  Get.put(EtudiantService());
+  // Get.put(EtudiantService()); // Commented out as EtudiantService.dart is missing
 
   runApp(const MyApp());
 }

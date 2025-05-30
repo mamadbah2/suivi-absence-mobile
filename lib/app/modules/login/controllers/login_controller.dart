@@ -1,17 +1,16 @@
 import 'package:get/get.dart';
-import '../../../data/repositories/auth_repository.dart';
+import '../../../data/providers/auth_provider.dart'; // Changed import
 import '../../../data/controllers/auth_controller.dart';
 
 class LoginController extends GetxController {
-  //Je recupere le repository pour faire la connexion avec Get.find()
-  //LoginController herite de GetxController pour avoir acces aux fonctions de Getx
+  //Le login controller est le lien entre la vue et le provider
   
-  //Le login controller est le lien entre la vue et le repository
+  final AuthProvider _authProvider; // Changed to AuthProvider
+  final AuthController _authController;
   
-  final AuthRepository _authRepository = Get.find<AuthRepository>();
-  final AuthController _authController = Get.find<AuthController>();
-  
-  final email = ''.obs;// .obs est un observable pour que le controller puisse observer les changements
+  LoginController(this._authProvider, this._authController); // Updated constructor
+
+  final email = ''.obs;
   final password = ''.obs;
   final isLoading = false.obs;
   
@@ -51,30 +50,23 @@ class LoginController extends GetxController {
     print('Tentative de connexion avec: ${email.value}');
     
     try {
-      final user = await _authRepository.login(email.value, password.value);
-      if (user != null) {
-        print('Connexion réussie');
-        // Stockage de l'utilisateur dans le contrôleur global
-        //Pour connaitre l'utilisateur connecte pendant la session
-        _authController.setUser(user);
-        Get.offNamed('/pointage');
-      } else {
-        print('Échec de la connexion');
-        Get.snackbar(
-          'Erreur',
-          'Identifiants invalides',
-          snackPosition: SnackPosition.BOTTOM,
-        );
-      }
+      // Call login on _authProvider directly
+      final user = await _authProvider.login(email.value, password.value); 
+      // Since _authProvider.login returns UserModel (non-nullable) or throws,
+      // we can assume user is not null here if no exception was thrown.
+      print('Connexion réussie');
+      _authController.setUser(user);
+      Get.offNamed('/pointage');
     } catch (e) {
       print('Erreur de connexion: $e');
       Get.snackbar(
         'Erreur',
-        'Une erreur est survenue',
+        // Display the actual error message from the provider if it's an Exception
+        e is Exception ? e.toString().replaceFirst('Exception: ', '') : 'Une erreur est survenue',
         snackPosition: SnackPosition.BOTTOM,
       );
     } finally {
       isLoading.value = false;
     }
   }
-} 
+}
