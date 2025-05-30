@@ -57,7 +57,16 @@ class LoginController extends GetxController {
         // Stockage de l'utilisateur dans le contrôleur global
         //Pour connaitre l'utilisateur connecte pendant la session
         _authController.setUser(user);
-        Get.offNamed('/pointage');
+        if (user.role == 'Admin') {
+          // Redirection vers la page d'administration
+          Get.offNamed('/justification');
+        } else if (user.role == 'Vigile') {
+          // Redirection vers la page utilisateur
+          Get.offNamed('/pointage');
+        } else if (user.role == 'Etudiant') {
+          // Redirection vers la page étudiant
+          Get.offNamed('/etudiant');
+        }
       } else {
         print('Échec de la connexion');
         Get.snackbar(
