@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:get/get.dart';
 
 class CustomHeaderPointage extends StatelessWidget {
   final Color headerColor = const Color(0xFF4A2E20);
@@ -38,7 +39,16 @@ class CustomHeaderPointage extends StatelessWidget {
                     style: TextStyle(color: textColor, fontSize: 16),
                   ),
                   const SizedBox(width: 8),
-                  Icon(Icons.logout, color: accentColor, size: 24),
+                  // Ajout d'un InkWell/GestureDetector pour rendre l'icône cliquable
+                  GestureDetector(
+                    onTap: () {
+                      // Utilisation de Get.offAllNamed pour rediriger vers la page login
+                      // et effacer toute la pile de navigation
+                      Get.offAllNamed('/login');
+                      print("Déconnexion... Redirection vers la page login");
+                    },
+                    child: Icon(Icons.logout, color: accentColor, size: 24),
+                  ),
                 ],
               ),
             ],

@@ -1,9 +1,10 @@
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
+import 'package:suivi_absence_mobile/app/modules/pointage/views/widgets/scanner_page.dart';
 import '../controllers/pointage_controller.dart';
 import './widgets/custom_header_pointage.dart';
-import 'widgets/scanner_page.dart'; // Corrected import path
 import '../../../data/models/absence.dart';
+import '../../marquage/views/marquage_presence_page.dart'; // Import de la nouvelle page
 
 class PointagePage extends StatefulWidget {
   const PointagePage({Key? key}) : super(key: key);
@@ -70,6 +71,52 @@ class _PointagePageState extends State<PointagePage> {
               '${_absenceTrouvee!.prenom} ${_absenceTrouvee!.nom} est déjà marqué(e) présent(e).',
               snackPosition: SnackPosition.BOTTOM,
             );
+        }
+      }
+    });
+  }
+
+  void _rechercherEtAfficherDetails(String matricule) {
+    if (matricule.isEmpty) {
+      setState(() {
+        _absenceTrouvee = null;
+        _messageErreur = "Le matricule ne peut pas être vide.";
+      });
+      return;
+    }
+
+    final absence = _pointageController.getAbsenceByMatricule(matricule);
+    setState(() {
+      _absenceTrouvee = absence;
+      if (absence == null) {
+        _messageErreur = "Aucun étudiant trouvé pour ce matricule.";
+      } else {
+        _messageErreur = null;
+        // Si l'étudiant est trouvé et est absent, naviguer vers la page de détail
+        if (absence.status == 'absent') {
+          // Utiliser Navigator.push au lieu de Get.to pour conserver la navigation native
+          Navigator.push(
+            context,
+            MaterialPageRoute(
+              builder: (context) => MarquagePresencePage(
+                absence: absence,
+                onPresenceMarked: () {
+                  // Cette fonction sera appelée après que l'étudiant ait été marqué présent
+                  // Mettre à jour l'état local et montrer une notification
+                  setState(() {
+                    // Rafraîchir l'état après marquage
+                    _absenceTrouvee = _pointageController.getAbsenceByMatricule(matricule);
+                  });
+                },
+              ),
+            ),
+          );
+        } else if (absence.status == 'present') {
+          Get.snackbar(
+            'Info',
+            '${absence.prenom} ${absence.nom} est déjà marqué(e) présent(e).',
+            snackPosition: SnackPosition.BOTTOM,
+          );
         }
       }
     });
@@ -189,8 +236,8 @@ class _PointagePageState extends State<PointagePage> {
                           MaterialPageRoute(builder: (context) => const ScannerPage()),
                         );
                         if (matriculeScanne != null && matriculeScanne.isNotEmpty) {
-                          _matriculeController.text = matriculeScanne; // Optionnel: afficher le matricule scanné
-                          _rechercherEtMarquerPresent(matriculeScanne); // Recherche et marque présent
+                          _matriculeController.text = matriculeScanne; // Afficher le matricule scanné
+                          _rechercherEtAfficherDetails(matriculeScanne); // Rechercher et afficher la page de détail
                         }
                       },
                     ),
