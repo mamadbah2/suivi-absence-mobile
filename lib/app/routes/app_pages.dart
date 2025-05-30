@@ -14,10 +14,10 @@ class AppPages {
       page: () => const LoginView(),
       binding: LoginBinding(),
     ),
-    GetPage(
-      name: Routes.POINTAGE,
-      page: () => const PointageView(),
-      binding: PointageBinding(),
-    )
+    // GetPage(
+    //   name: Routes.POINTAGE,
+    //   page: () => PointageView(),
+    //   binding: PointageBinding(),
+    // )
   ];
 } 

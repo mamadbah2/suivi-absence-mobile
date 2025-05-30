@@ -6,7 +6,7 @@ class UserModel {
   final String password;
   final String role;
 
-  User({
+  UserModel({
     required this.id,
     required this.nom,
     required this.prenom,
