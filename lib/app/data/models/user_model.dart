@@ -5,6 +5,7 @@ class UserModel {
   final String email;
   final String password;
   final String role;
+  final String? matricule; // Ajout du matricule, nullable car seuls les étudiants l'ont
 
   UserModel({
     required this.id,
@@ -12,7 +13,8 @@ class UserModel {
     required this.prenom,
     required this.email,
     required this.password,
-    required this.role
+    required this.role,
+    this.matricule, // Optionnel
   });
 
   factory UserModel.fromJson(Map<String, dynamic> json) {
@@ -23,7 +25,7 @@ class UserModel {
       email: json['email'] ?? '',
       password: json['password'] ?? '',
       role: json['role'] ?? '',
-
+      matricule: json['matricule'], // Peut être null
     );
   }
 
@@ -35,6 +37,7 @@ class UserModel {
       'email': email,
       'password': password,
       'role': role,
+      'matricule': matricule,
     };
   }
-} 
+}

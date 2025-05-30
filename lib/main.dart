@@ -6,7 +6,7 @@ void main() {
   // Initialiser les services
   // Get.put(EtudiantService()); // Commented out as EtudiantService.dart is missing
 
-  runApp(const MyApp());
+  runApp(const SuiviAbsenceApp()); // Remplacé MyApp() par SuiviAbsenceApp() et ajouté const
 }
 
 class SuiviAbsenceApp extends StatelessWidget {

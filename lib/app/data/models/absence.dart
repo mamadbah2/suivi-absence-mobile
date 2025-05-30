@@ -1,19 +1,23 @@
 class Absence {
   final String id;
-  final String matricule; // Added matricule
+  final String matricule;
   final String nom;
   final String prenom;
   final String classe;
   final String module;
   final DateTime date;
   final String heure;
-  final String status; // This will be used for "absent" or "présent"
-  final String? justification; // Made nullable
-  final String? justificatif; // Made nullable
+  final String status; // "absent" ou "présent"
+  final String? justification; // ex: "Justifiée", "En attente", null
+  final String? justificatif; // URL ou chemin vers le document justificatif
+  final String? duree; // ex: "8h-12h"
+  final String? type; // ex: "Absence" ou "Retard"
+  final String? professeur; // ex: "Prof. Dupont"
+  final String? salle; // ex: "Bâtiment A - Salle 203"
 
   Absence({
     required this.id,
-    required this.matricule, // Added matricule
+    required this.matricule,
     required this.nom,
     required this.prenom,
     required this.classe,
@@ -21,14 +25,18 @@ class Absence {
     required this.date,
     required this.heure,
     required this.status,
-    this.justification, // Updated
-    this.justificatif, // Updated
+    this.justification,
+    this.justificatif,
+    this.duree,
+    this.type,
+    this.professeur,
+    this.salle,
   });
 
   factory Absence.fromJson(Map<String, dynamic> json) {
     return Absence(
       id: json['id'],
-      matricule: json['matricule'], // Added matricule
+      matricule: json['matricule'],
       nom: json['nom'],
       prenom: json['prenom'],
       classe: json['classe'],
@@ -38,10 +46,14 @@ class Absence {
       status: json['status'],
       justification: json['justification'],
       justificatif: json['justificatif'],
+      duree: json['duree'],
+      type: json['type'],
+      professeur: json['professeur'],
+      salle: json['salle'],
     );
   }
 
-  Map<String, dynamic> toJson() { // Added toJson for completeness
+  Map<String, dynamic> toJson() {
     return {
       'id': id,
       'matricule': matricule,
@@ -54,10 +66,14 @@ class Absence {
       'status': status,
       'justification': justification,
       'justificatif': justificatif,
+      'duree': duree,
+      'type': type,
+      'professeur': professeur,
+      'salle': salle,
     };
   }
 
-  Absence copyWith({ // Added copyWith
+  Absence copyWith({
     String? id,
     String? matricule,
     String? nom,
@@ -69,6 +85,10 @@ class Absence {
     String? status,
     String? justification,
     String? justificatif,
+    String? duree,
+    String? type,
+    String? professeur,
+    String? salle,
   }) {
     return Absence(
       id: id ?? this.id,
@@ -82,6 +102,10 @@ class Absence {
       status: status ?? this.status,
       justification: justification ?? this.justification,
       justificatif: justificatif ?? this.justificatif,
+      duree: duree ?? this.duree,
+      type: type ?? this.type,
+      professeur: professeur ?? this.professeur,
+      salle: salle ?? this.salle,
     );
   }
 }

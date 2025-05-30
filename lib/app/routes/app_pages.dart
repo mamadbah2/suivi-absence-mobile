@@ -5,6 +5,8 @@ import '../modules/login/views/login_view.dart';
 import '../modules/pointage/bindings/pointage_binding.dart';
 import '../modules/pointage/views/pointage_page.dart';
 import '../modules/marquage/bindings/marquage_binding.dart';
+import '../modules/etudiant/bindings/etudiant_binding.dart'; // Import du binding étudiant
+import '../modules/etudiant/views/etudiant_page.dart'; // Import de la page étudiant
 
 part 'app_routes.dart';
 
@@ -33,6 +35,11 @@ class AppPages {
         return Container(); // Page placeholder qui ne sera jamais affichée
       },
       binding: MarquageBinding(),
-    )
+    ),
+    GetPage(
+      name: _Paths.ETUDIANT,
+      page: () => const EtudiantPage(),
+      binding: EtudiantBinding(),
+    ),
   ];
 }

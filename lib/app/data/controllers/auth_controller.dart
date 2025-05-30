@@ -15,7 +15,9 @@ class AuthController extends GetxController {
     isAuthenticated.value = false;
   }
 
-  // Getter pour faciliter l'accès aux données de l'utilisateur
+  // Getters pour faciliter l'accès aux données de l'utilisateur
   String get userEmail => currentUser.value?.email ?? '';
   String get userToken => currentUser.value?.password ?? '';
-} 
+  String get userRole => currentUser.value?.role ?? ''; // Getter pour le rôle
+  String get userMatricule => currentUser.value?.matricule ?? ''; // Getter pour le matricule
+}

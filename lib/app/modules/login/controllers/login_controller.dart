@@ -56,7 +56,16 @@ class LoginController extends GetxController {
       // we can assume user is not null here if no exception was thrown.
       print('Connexion réussie');
       _authController.setUser(user);
-      Get.offNamed('/pointage');
+      
+      // Redirection en fonction du rôle de l'utilisateur
+      if (user.role == 'etudiant') {
+        print('Redirection vers la page étudiant');
+        Get.offAllNamed('/etudiant'); // Utilisation de offAllNamed pour effacer la pile de navigation
+      } else {
+        print('Redirection vers la page pointage');
+        Get.offAllNamed('/pointage');
+      }
+      
     } catch (e) {
       print('Erreur de connexion: $e');
       Get.snackbar(
