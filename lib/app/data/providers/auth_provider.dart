@@ -18,11 +18,11 @@ class AuthProvider extends GetConnect {
       return Response(
         body: {
           'id': '1',
-          'nom': 'Doe',
-          'prenom': 'Fatima',
+          'nom': 'Keita',
+          'prenom': 'John',
           'email': email,
           'password': password,
-          'role': 'admin',
+          'role': 'Vigile',
         },
         statusCode: 200,
       );

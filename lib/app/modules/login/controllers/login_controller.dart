@@ -1,20 +1,22 @@
 import 'package:get/get.dart';
+import 'package:flutter/material.dart';
 import '../../../data/repositories/auth_repository.dart';
 import '../../../data/controllers/auth_controller.dart';
+import '../../../routes/app_pages.dart';
 
 class LoginController extends GetxController {
   //Je recupere le repository pour faire la connexion avec Get.find()
   //LoginController herite de GetxController pour avoir acces aux fonctions de Getx
-  
+
   //Le login controller est le lien entre la vue et le repository
-  
+
   final AuthRepository _authRepository = Get.find<AuthRepository>();
   final AuthController _authController = Get.find<AuthController>();
-  
-  final email = ''.obs;// .obs est un observable pour que le controller puisse observer les changements
-  final password = ''.obs;
+
+  final username = TextEditingController();
+  final password = TextEditingController();
   final isLoading = false.obs;
-  
+
   @override
   void onInit() {
     super.onInit();
@@ -26,64 +28,65 @@ class LoginController extends GetxController {
     super.onReady();
     print('LoginController ready');
   }
-  
-  void setEmail(String value) {
-    email.value = value;
-    print('Email set: $value');
-  }
-  
-  void setPassword(String value) {
-    password.value = value;
-    print('Password set: $value');
+
+  @override
+  void onClose() {
+    username.dispose();
+    password.dispose();
+    super.onClose();
   }
 
-  Future<void> login() async {
-    if (email.isEmpty || password.isEmpty) {
+  void handleLogin() async {
+    if (username.text.isEmpty || password.text.isEmpty) {
       Get.snackbar(
         'Erreur',
         'Veuillez remplir tous les champs',
         snackPosition: SnackPosition.BOTTOM,
+        backgroundColor: Colors.red,
+        colorText: Colors.white,
       );
       return;
     }
 
     isLoading.value = true;
-    print('Tentative de connexion avec: ${email.value}');
-    
+
     try {
-      final user = await _authRepository.login(email.value, password.value);
+      final user = await _authRepository.login(
+        username.text,
+        password.text,
+      );
+
       if (user != null) {
-        print('Connexion réussie');
-        // Stockage de l'utilisateur dans le contrôleur global
-        //Pour connaitre l'utilisateur connecte pendant la session
         _authController.setUser(user);
-        if (user.role == 'Admin') {
-          // Redirection vers la page d'administration
-          Get.offNamed('/justification');
-        } else if (user.role == 'Vigile') {
-          // Redirection vers la page utilisateur
-          Get.offNamed('/pointage');
-        } else if (user.role == 'Etudiant') {
-          // Redirection vers la page étudiant
-          Get.offNamed('/etudiant');
+
+        // Redirection basée sur le rôle
+        final role = user.role.toLowerCase();
+        if (role == 'etudiant') {
+          Get.offAllNamed(Routes.ABSENCES);
+        } else if (role == 'vigile') {
+          Get.offAllNamed(Routes.POINTAGE);
+        } else if (role == 'admin') {
+          Get.offAllNamed(Routes.ETUDIANT);
+        } else {
+          Get.snackbar(
+            'Erreur',
+            'Rôle non reconnu',
+            snackPosition: SnackPosition.BOTTOM,
+            backgroundColor: Colors.red,
+            colorText: Colors.white,
+          );
         }
-      } else {
-        print('Échec de la connexion');
-        Get.snackbar(
-          'Erreur',
-          'Identifiants invalides',
-          snackPosition: SnackPosition.BOTTOM,
-        );
       }
     } catch (e) {
-      print('Erreur de connexion: $e');
       Get.snackbar(
         'Erreur',
-        'Une erreur est survenue',
+        'Identifiants incorrects',
         snackPosition: SnackPosition.BOTTOM,
+        backgroundColor: Colors.red,
+        colorText: Colors.white,
       );
     } finally {
       isLoading.value = false;
     }
   }
-} 
+}

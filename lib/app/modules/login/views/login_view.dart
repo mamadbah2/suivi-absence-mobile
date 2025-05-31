@@ -12,7 +12,7 @@ class LoginView extends GetView<LoginController> {
         children: [
           // Fond marron
           Container(color: const Color(0xFF3D2914)),
-          
+
           // Forme courbe blanche
           Positioned.fill(
             child: CustomPaint(
@@ -20,7 +20,7 @@ class LoginView extends GetView<LoginController> {
               child: Container(),
             ),
           ),
-          
+
           // Contenu
           SafeArea(
             child: Padding(
@@ -29,7 +29,7 @@ class LoginView extends GetView<LoginController> {
                 crossAxisAlignment: CrossAxisAlignment.stretch,
                 children: [
                   const SizedBox(height: 20),
-                  
+
                   // Logo
                   Align(
                     alignment: Alignment.topRight,
@@ -46,9 +46,9 @@ class LoginView extends GetView<LoginController> {
                       ),
                     ),
                   ),
-                  
+
                   const Spacer(),
-                  
+
                   // Formulaire de connexion
                   const Text(
                     'Log In',
@@ -60,10 +60,10 @@ class LoginView extends GetView<LoginController> {
                     textAlign: TextAlign.left,
                   ),
                   const SizedBox(height: 40),
-                  
+
                   // Champ email
                   TextField(
-                    onChanged: controller.setEmail,
+                    controller: controller.username,
                     decoration: InputDecoration(
                       hintText: 'username@example.com',
                       hintStyle: const TextStyle(color: Color(0xFFB0A89B)),
@@ -73,18 +73,20 @@ class LoginView extends GetView<LoginController> {
                       ),
                       focusedBorder: OutlineInputBorder(
                         borderRadius: BorderRadius.circular(8),
-                        borderSide: const BorderSide(color: Color(0xFFD68D30), width: 2),
+                        borderSide: const BorderSide(
+                            color: Color(0xFFD68D30), width: 2),
                       ),
-                      contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 16),
+                      contentPadding: const EdgeInsets.symmetric(
+                          horizontal: 16, vertical: 16),
                     ),
                     keyboardType: TextInputType.emailAddress,
                     autocorrect: false,
                   ),
                   const SizedBox(height: 20),
-                  
+
                   // Champ mot de passe
                   TextField(
-                    onChanged: controller.setPassword,
+                    controller: controller.password,
                     decoration: InputDecoration(
                       hintText: '••••••••••',
                       hintStyle: const TextStyle(color: Color(0xFFB0A89B)),
@@ -94,43 +96,48 @@ class LoginView extends GetView<LoginController> {
                       ),
                       focusedBorder: OutlineInputBorder(
                         borderRadius: BorderRadius.circular(8),
-                        borderSide: const BorderSide(color: Color(0xFFD68D30), width: 2),
+                        borderSide: const BorderSide(
+                            color: Color(0xFFD68D30), width: 2),
                       ),
-                      contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 16),
+                      contentPadding: const EdgeInsets.symmetric(
+                          horizontal: 16, vertical: 16),
                     ),
                     obscureText: true,
                   ),
                   const SizedBox(height: 32),
-                  
+
                   // Bouton de connexion
                   Obx(() => ElevatedButton(
-                    onPressed: controller.isLoading.value ? null : controller.login,
-                    style: ElevatedButton.styleFrom(
-                      backgroundColor: const Color(0xFFD68D30),
-                      padding: const EdgeInsets.symmetric(vertical: 16),
-                      shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(8),
-                      ),
-                      minimumSize: const Size(double.infinity, 54),
-                    ),
-                    child: controller.isLoading.value
-                        ? const SizedBox(
-                            height: 24,
-                            width: 24,
-                            child: CircularProgressIndicator(
-                              strokeWidth: 2,
-                              valueColor: AlwaysStoppedAnimation(Colors.white),
-                            ),
-                          )
-                        : const Text(
-                            'Log In',
-                            style: TextStyle(
-                              fontSize: 16,
-                              fontWeight: FontWeight.w600,
-                              color: Colors.white,
-                            ),
+                        onPressed: controller.isLoading.value
+                            ? null
+                            : controller.handleLogin,
+                        style: ElevatedButton.styleFrom(
+                          backgroundColor: const Color(0xFFD68D30),
+                          padding: const EdgeInsets.symmetric(vertical: 16),
+                          shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(8),
                           ),
-                  )),
+                          minimumSize: const Size(double.infinity, 54),
+                        ),
+                        child: controller.isLoading.value
+                            ? const SizedBox(
+                                height: 24,
+                                width: 24,
+                                child: CircularProgressIndicator(
+                                  strokeWidth: 2,
+                                  valueColor:
+                                      AlwaysStoppedAnimation(Colors.white),
+                                ),
+                              )
+                            : const Text(
+                                'Log In',
+                                style: TextStyle(
+                                  fontSize: 16,
+                                  fontWeight: FontWeight.w600,
+                                  color: Colors.white,
+                                ),
+                              ),
+                      )),
                   const Spacer(),
                 ],
               ),
@@ -172,4 +179,4 @@ class CurvedPainter extends CustomPainter {
 
   @override
   bool shouldRepaint(CustomPainter oldDelegate) => false;
-} 
+}
