@@ -112,7 +112,7 @@ class _ListePresencesPageState extends State<ListePresencesPage> {
                     child: ListTile(
                       leading: const CircleAvatar(
                         backgroundImage:
-                            AssetImage('assets/images/avatar_femme.png'),
+                            AssetImage('image copy.png'),
                       ),
                       title: Text(_filteredEtudiants[index]),
                       subtitle: const Text('Présent(e)'),

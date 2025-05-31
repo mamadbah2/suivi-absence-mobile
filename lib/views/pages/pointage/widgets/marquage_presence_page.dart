@@ -82,7 +82,7 @@ class MarquagePresencePage extends StatelessWidget {
                           const CircleAvatar(
                             radius: 35,
                             backgroundImage: AssetImage(
-                              '/Users/mac/Downloads/suivi-absence-mobile/IMG_7947 2.jpg',
+                              'image copy.png',
                             ),
                           ),
                           const SizedBox(height: 16),
