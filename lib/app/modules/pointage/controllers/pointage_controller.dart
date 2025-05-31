@@ -6,19 +6,21 @@ import 'package:flutter/material.dart';
 class PointageController extends GetxController {
   final AuthController _authController = Get.find<AuthController>();
   final searchQuery = ''.obs;
+  final matriculeQuery = ''.obs;
   final RxList<EtudiantPointageModel> etudiants = <EtudiantPointageModel>[].obs;
   final RxList<EtudiantPointageModel> filteredEtudiants =
       <EtudiantPointageModel>[].obs;
-  final selectedFilter = 'Aujourd\'hui'.obs;
+  final RxList<String> recentPresents = <String>[].obs;
   final selectedClasse = 'Toutes les classes'.obs;
+  final searchByMatricule = true.obs;
 
   final List<String> classes = [
     'Toutes les classes',
-    'L3 Informatique',
-    'L2 Informatique',
-    'L1 Informatique',
-    'M1 Informatique',
-    'M2 Informatique',
+    'L3GLRS',
+    'L2CPD',
+    'L1CDSD',
+    'L2IAGE',
+    'L2ETSE',
   ];
 
   // Getter pour accéder aux informations de l'utilisateur
@@ -36,70 +38,61 @@ class PointageController extends GetxController {
   }
 
   void loadEtudiants() {
-    // Simuler le chargement des données
     final List<Map<String, String>> data = [
       {
-        'nom': 'DIOP',
-        'prenom': 'Aminata',
-        'matricule': 'MAT2023001',
-        'classe': 'L3 Informatique'
+        'nom': 'Keita',
+        'prenom': 'Fatima',
+        'matricule': 'DK-2025001',
+        'classe': 'L3GLRS'
       },
       {
         'nom': 'NDIAYE',
-        'prenom': 'Moussa',
-        'matricule': 'MAT2023002',
-        'classe': 'L2 Informatique'
+        'prenom': 'Anna',
+        'matricule': 'DK-2025002',
+        'classe': 'L2CPD'
       },
       {
-        'nom': 'SOW',
-        'prenom': 'Fatou',
-        'matricule': 'MAT2023003',
-        'classe': 'L3 Informatique'
+        'nom': 'Bah',
+        'prenom': 'Mamadou',
+        'matricule': 'DK-2025003',
+        'classe': 'L3GLRS'
       },
       {
-        'nom': 'BA',
-        'prenom': 'Ibrahima',
-        'matricule': 'MAT2023004',
-        'classe': 'M1 Informatique'
+        'nom': 'Keita',
+        'prenom': 'Mariem',
+        'matricule': 'DK-2025004',
+        'classe': 'L2IAGE'
       },
       {
-        'nom': 'GUEYE',
-        'prenom': 'Aissatou',
-        'matricule': 'MAT2023005',
-        'classe': 'L3 Informatique'
+        'nom': 'Ba',
+        'prenom': 'Ousmane',
+        'matricule': 'DK-2025005',
+        'classe': 'L3GLRS'
       },
       {
-        'nom': 'FALL',
-        'prenom': 'Omar',
-        'matricule': 'MAT2023006',
-        'classe': 'L2 Informatique'
+        'nom': 'Niang',
+        'prenom': 'Fatoumata',
+        'matricule': 'DK-2025006',
+        'classe': 'L2CPD'
       },
       {
-        'nom': 'SARR',
-        'prenom': 'Marie',
-        'matricule': 'MAT2023007',
-        'classe': 'M2 Informatique'
-      },
-      {
-        'nom': 'DIALLO',
-        'prenom': 'Abdou',
-        'matricule': 'MAT2023008',
-        'classe': 'L1 Informatique'
+        'nom': 'Toure',
+        'prenom': 'Ameth',
+        'matricule': 'DK-2025007',
+        'classe': 'L2ETSE'
       },
     ];
 
-    etudiants.value =
-        data.map((e) => EtudiantPointageModel.fromJson(e)).toList();
+    etudiants.value = data.map((e) {
+      var etudiant = EtudiantPointageModel.fromJson(e);
+      etudiant.status = 'Absent'; // Par défaut tous les étudiants sont absents
+      return etudiant;
+    }).toList();
     applyFilters();
   }
 
-  void updateSearch(String query) {
-    searchQuery.value = query;
-    applyFilters();
-  }
-
-  void updateFilter(String filter) {
-    selectedFilter.value = filter;
+  void updateMatricule(String matricule) {
+    matriculeQuery.value = matricule;
     applyFilters();
   }
 
@@ -111,15 +104,12 @@ class PointageController extends GetxController {
   void applyFilters() {
     var filtered = etudiants;
 
-    // Filtre par recherche
-    if (searchQuery.isNotEmpty) {
+    // Filtre par matricule
+    if (matriculeQuery.isNotEmpty) {
       filtered = filtered
-          .where((etudiant) {
-            final searchLower = searchQuery.value.toLowerCase();
-            return etudiant.nom.toLowerCase().contains(searchLower) ||
-                etudiant.prenom.toLowerCase().contains(searchLower) ||
-                etudiant.matricule.toLowerCase().contains(searchLower);
-          })
+          .where((etudiant) => etudiant.matricule
+              .toLowerCase()
+              .contains(matriculeQuery.value.toLowerCase()))
           .toList()
           .obs;
     }
@@ -132,17 +122,57 @@ class PointageController extends GetxController {
           .obs;
     }
 
-    // Filtre par période
-    // Note: À implémenter selon les besoins (aujourd'hui/cette semaine)
+    // Ne montrer que les 5 derniers étudiants marqués présents
+    if (matriculeQuery.isEmpty) {
+      filtered = filtered
+          .where((etudiant) => recentPresents.contains(etudiant.matricule))
+          .take(5)
+          .toList()
+          .obs;
+    }
 
     filteredEtudiants.value = filtered;
   }
 
-  void updateEtudiantStatus(String matricule, String status) {
+  void markPresent(String matricule) async {
     final index = etudiants.indexWhere((e) => e.matricule == matricule);
     if (index != -1) {
-      etudiants[index].status = status;
+      etudiants[index].status = 'Présent';
+
+      // Ajouter à la liste des présents récents
+      if (!recentPresents.contains(matricule)) {
+        recentPresents.add(matricule);
+        if (recentPresents.length > 5) {
+          recentPresents.removeAt(0); // Garder seulement les 5 derniers
+        }
+      }
+
+      // Sauvegarder automatiquement
+      try {
+        // TODO: Implémenter la sauvegarde vers l'API
+        Get.snackbar(
+          'Succès',
+          'Présence enregistrée',
+          snackPosition: SnackPosition.BOTTOM,
+          backgroundColor: Colors.green,
+          colorText: Colors.white,
+          duration: const Duration(seconds: 2),
+        );
+      } catch (e) {
+        Get.snackbar(
+          'Erreur',
+          'Erreur lors de l\'enregistrement',
+          snackPosition: SnackPosition.BOTTOM,
+          backgroundColor: Colors.red,
+          colorText: Colors.white,
+          duration: const Duration(seconds: 2),
+        );
+      }
+
       applyFilters();
+
+      // Réinitialiser la recherche
+      matriculeQuery.value = '';
     }
   }
 

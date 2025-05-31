@@ -27,7 +27,7 @@ class PointageView extends GetView<PointageController> {
         padding: const EdgeInsets.all(16.0),
         child: Column(
           children: [
-            // Section Filtres
+            // Section Recherche
             Card(
               elevation: 2,
               shape: RoundedRectangleBorder(
@@ -37,11 +37,11 @@ class PointageView extends GetView<PointageController> {
                 padding: const EdgeInsets.all(12.0),
                 child: Column(
                   children: [
-                    // Barre de recherche
+                    // Champ de recherche par matricule
                     TextField(
-                      onChanged: controller.updateSearch,
+                      onChanged: controller.updateMatricule,
                       decoration: InputDecoration(
-                        hintText: 'Rechercher un étudiant...',
+                        hintText: 'Entrer le matricule de l\'étudiant...',
                         prefixIcon: const Icon(Icons.search, color: ismBrown),
                         border: OutlineInputBorder(
                           borderRadius: BorderRadius.circular(8),
@@ -52,7 +52,7 @@ class PointageView extends GetView<PointageController> {
                       ),
                     ),
                     const SizedBox(height: 12),
-                    // Filtres supplémentaires
+                    // Filtre par classe
                     Row(
                       children: [
                         Expanded(
@@ -78,11 +78,6 @@ class PointageView extends GetView<PointageController> {
                                 },
                               )),
                         ),
-                        const SizedBox(width: 8),
-                        IconButton(
-                          icon: const Icon(Icons.filter_list, color: ismOrange),
-                          onPressed: () => _showFilterDialog(context),
-                        ),
                       ],
                     ),
                   ],
@@ -93,52 +88,28 @@ class PointageView extends GetView<PointageController> {
 
             // Liste des étudiants
             Expanded(
-              child: Obx(() => ListView.separated(
-                    itemCount: controller.filteredEtudiants.length,
-                    separatorBuilder: (_, __) =>
-                        const Divider(height: 1, color: ismOrangeLight),
-                    itemBuilder: (context, index) {
-                      final etudiant = controller.filteredEtudiants[index];
-                      return _buildStudentItem(etudiant);
-                    },
-                  )),
-            ),
-
-            // Boutons d'action
-            Padding(
-              padding: const EdgeInsets.only(top: 16),
-              child: Row(
-                mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-                children: [
-                  ElevatedButton.icon(
-                    icon: const Icon(Icons.save, color: Colors.white),
-                    label: const Text('Enregistrer',
-                        style: TextStyle(color: Colors.white)),
-                    style: ElevatedButton.styleFrom(
-                      backgroundColor: ismBrown,
-                      padding: const EdgeInsets.symmetric(
-                          horizontal: 24, vertical: 12),
-                      shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(8),
+              child: Obx(() {
+                if (controller.filteredEtudiants.isEmpty) {
+                  return const Center(
+                    child: Text(
+                      'Aucun étudiant trouvé',
+                      style: TextStyle(
+                        fontSize: 16,
+                        color: ismBrownDark,
                       ),
                     ),
-                    onPressed: () => controller.savePointage(),
-                  ),
-                  OutlinedButton(
-                    style: OutlinedButton.styleFrom(
-                      side: const BorderSide(color: ismBrownDark),
-                      padding: const EdgeInsets.symmetric(
-                          horizontal: 24, vertical: 12),
-                      shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(8),
-                      ),
-                    ),
-                    onPressed: () => Get.back(),
-                    child: const Text('Annuler',
-                        style: TextStyle(color: ismBrownDark)),
-                  ),
-                ],
-              ),
+                  );
+                }
+                return ListView.separated(
+                  itemCount: controller.filteredEtudiants.length,
+                  separatorBuilder: (_, __) =>
+                      const Divider(height: 1, color: ismOrangeLight),
+                  itemBuilder: (context, index) {
+                    final etudiant = controller.filteredEtudiants[index];
+                    return _buildStudentItem(etudiant);
+                  },
+                );
+              }),
             ),
           ],
         ),
@@ -175,72 +146,19 @@ class PointageView extends GetView<PointageController> {
             Text('Classe: ${etudiant.classe}'),
           ],
         ),
-        trailing: Container(
-          width: 120,
-          child: DropdownButton<String>(
-            value: etudiant.status,
-            isExpanded: true,
-            icon: const Icon(Icons.arrow_drop_down, color: ismBrownLight),
-            items: <String>['Présent', 'Absent', 'Retard'].map((String value) {
-              return DropdownMenuItem<String>(
-                value: value,
-                child: Text(value,
-                    style: TextStyle(
-                      color: value == 'Présent'
-                          ? Colors.green
-                          : value == 'Absent'
-                              ? Colors.red
-                              : Colors.orange,
-                    )),
-              );
-            }).toList(),
-            onChanged: (String? newValue) {
-              if (newValue != null) {
-                controller.updateEtudiantStatus(etudiant.matricule, newValue);
-              }
-            },
-            underline: Container(
-              height: 1,
-              color: ismOrangeLight,
+        trailing: ElevatedButton(
+          style: ElevatedButton.styleFrom(
+            backgroundColor:
+                etudiant.status == 'Présent' ? Colors.green : Colors.grey,
+            shape: RoundedRectangleBorder(
+              borderRadius: BorderRadius.circular(8),
             ),
           ),
-        ),
-      ),
-    );
-  }
-
-  void _showFilterDialog(BuildContext context) {
-    showDialog(
-      context: context,
-      builder: (context) => AlertDialog(
-        title: const Text('Filtrer par période',
-            style: TextStyle(color: ismBrownDark)),
-        content: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            Obx(() => CheckboxListTile(
-                  title: const Text('Aujourd\'hui'),
-                  value: controller.selectedFilter.value == 'Aujourd\'hui',
-                  activeColor: ismOrange,
-                  onChanged: (bool? value) {
-                    if (value == true) {
-                      controller.updateFilter('Aujourd\'hui');
-                      Get.back();
-                    }
-                  },
-                )),
-            Obx(() => CheckboxListTile(
-                  title: const Text('Cette semaine'),
-                  value: controller.selectedFilter.value == 'Cette semaine',
-                  activeColor: ismOrange,
-                  onChanged: (bool? value) {
-                    if (value == true) {
-                      controller.updateFilter('Cette semaine');
-                      Get.back();
-                    }
-                  },
-                )),
-          ],
+          onPressed: () => controller.markPresent(etudiant.matricule),
+          child: Text(
+            etudiant.status,
+            style: const TextStyle(color: Colors.white),
+          ),
         ),
       ),
     );
