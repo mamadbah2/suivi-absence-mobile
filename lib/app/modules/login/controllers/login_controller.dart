@@ -97,26 +97,38 @@ class LoginController extends GetxController {
   }
   
   void _redirectBasedOnRole(String role) {
-    switch (role.toLowerCase()) {
-      case 'etudiant':
-        print('Redirection vers la page étudiant');
-        Get.offAllNamed('/etudiant');
-        break;
-      case 'enseignant':
-      case 'admin':
-      case 'professeur':
-        print('Redirection vers la page pointage');
-        Get.offAllNamed('/pointage');
-        break;
-      default:
-        // Si le rôle n'est pas reconnu, on déconnecte l'utilisateur par sécurité
-        _authProvider.logout();
-        _authController.clearUser();
-        Get.snackbar(
-          'Erreur',
-          'Rôle utilisateur non reconnu',
-          snackPosition: SnackPosition.BOTTOM,
-        );
+    // Convertir en minuscules et enlever les espaces pour une comparaison plus fiable
+    final normalizedRole = role.toLowerCase().trim();
+    
+    print('Redirection basée sur le rôle: "$role" (normalisé: "$normalizedRole")');
+    
+    // Vérifier les différentes possibilités du rôle
+    if (normalizedRole == 'etudiant') {
+      print('Redirection vers la page étudiant');
+      Get.offAllNamed('/etudiant');
+    } 
+    // Tous ces rôles vont vers la page de pointage
+    else if (normalizedRole == 'vigile' || 
+             normalizedRole == 'admin' || 
+             normalizedRole == 'professeur' || 
+             normalizedRole == 'vigile' || 
+             normalizedRole == 'VIGILE'.toLowerCase()) {
+      print('Redirection vers la page pointage pour le rôle: $role');
+      Get.offAllNamed('/pointage');
+    } 
+    else {
+      // Si le rôle n'est pas reconnu, afficher une alerte et déconnecter
+      print('Rôle non reconnu: $role');
+      _authProvider.logout();
+      _authController.clearUser();
+      Get.snackbar(
+        'Erreur',
+        'Rôle utilisateur non reconnu: "$role"',
+        snackPosition: SnackPosition.BOTTOM,
+        backgroundColor: Colors.red.withOpacity(0.8),
+        colorText: Colors.white,
+        duration: const Duration(seconds: 5),
+      );
     }
   }
 }

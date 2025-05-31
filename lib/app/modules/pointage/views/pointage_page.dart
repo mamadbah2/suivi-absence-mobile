@@ -25,6 +25,72 @@ class _PointagePageState extends State<PointagePage> {
   Absence? _absenceTrouvee;
   String? _messageErreur;
 
+  // Nouvelle méthode qui recherche un étudiant en utilisant l'API
+  Future<void> _rechercherEtudiantAPI(String matricule) async {
+    if (matricule.isEmpty) {
+      setState(() {
+        _absenceTrouvee = null;
+        _messageErreur = "Le matricule ne peut pas être vide.";
+      });
+      return;
+    }
+
+    setState(() {
+      _messageErreur = "Recherche en cours...";
+      _absenceTrouvee = null;
+    });
+
+    try {
+      // Utiliser la nouvelle méthode qui fait appel à l'API
+      final absence = await _pointageController.rechercherEtudiantParMatricule(matricule);
+      
+      setState(() {
+        _absenceTrouvee = absence;
+        if (absence == null) {
+          _messageErreur = "Aucun étudiant trouvé pour ce matricule.";
+        } else {
+          _messageErreur = null;
+          // Si l'étudiant est trouvé et est absent, naviguer vers la page de détail
+          if (absence.status == 'absent') {
+            // Navigation différée pour permettre la mise à jour de l'état d'abord
+            Future.microtask(() {
+              Navigator.push(
+                context,
+                MaterialPageRoute(
+                  builder: (context) => MarquagePresencePage(
+                    absence: absence,
+                    onPresenceMarked: () {
+                      // Cette fonction sera appelée après que l'étudiant ait été marqué présent
+                      setState(() {
+                        // Rafraîchir l'état après marquage
+                        _absenceTrouvee = _pointageController.getAbsenceByMatricule(matricule);
+                      });
+                    },
+                  ),
+                ),
+              );
+            });
+          } else if (absence.status == 'present') {
+            Get.snackbar(
+              'Info',
+              '${absence.prenom} ${absence.nom} est déjà marqué(e) présent(e).',
+              snackPosition: SnackPosition.BOTTOM,
+            );
+          }
+        }
+      });
+    } catch (e) {
+      setState(() {
+        _messageErreur = "Erreur lors de la recherche: $e";
+      });
+      Get.snackbar(
+        'Erreur',
+        'Problème lors de la recherche: $e',
+        snackPosition: SnackPosition.BOTTOM,
+      );
+    }
+  }
+
   // void _rechercherEtMarquerPresent(String matricule) async { // Combined search and mark present
   //   if (matricule.isEmpty) {
   //     setState(() {
@@ -191,7 +257,7 @@ class _PointagePageState extends State<PointagePage> {
                                 hintStyle: TextStyle(color: Colors.grey[600]),
                               ),
                               onSubmitted: (value) {
-                                _rechercherAbsenceManuelle(value); // Recherche manuelle
+                                _rechercherEtudiantAPI(value); // Utiliser l'API au lieu de la recherche locale
                               },
                               onChanged: (value) {
                                 if (_absenceTrouvee != null || _messageErreur != null) {
@@ -206,7 +272,7 @@ class _PointagePageState extends State<PointagePage> {
                           IconButton(
                             icon: Icon(Icons.search, color: accentColor, size: 28),
                             onPressed: () {
-                              _rechercherAbsenceManuelle(_matriculeController.text); // Recherche manuelle
+                              _rechercherEtudiantAPI(_matriculeController.text); // Utiliser l'API au lieu de la recherche locale
                             },
                           ),
                         ],
@@ -237,7 +303,7 @@ class _PointagePageState extends State<PointagePage> {
                         );
                         if (matriculeScanne != null && matriculeScanne.isNotEmpty) {
                           _matriculeController.text = matriculeScanne; // Afficher le matricule scanné
-                          _rechercherEtAfficherDetails(matriculeScanne); // Rechercher et afficher la page de détail
+                          _rechercherEtudiantAPI(matriculeScanne); // Utiliser l'API au lieu de la recherche locale
                         }
                       },
                     ),

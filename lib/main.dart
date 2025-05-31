@@ -1,9 +1,11 @@
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'app/routes/app_pages.dart';
+import 'app/data/providers/auth_provider.dart'; // Import AuthProvider
 
 void main() {
-  // Initialiser les services
+  // Initialiser les services et providers globaux
+  Get.put(AuthProvider(), permanent: true);
   // Get.put(EtudiantService()); // Commented out as EtudiantService.dart is missing
 
   runApp(const SuiviAbsenceApp()); // Remplacé MyApp() par SuiviAbsenceApp() et ajouté const

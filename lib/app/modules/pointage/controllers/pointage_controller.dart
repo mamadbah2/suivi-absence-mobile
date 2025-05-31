@@ -1,14 +1,14 @@
 import 'package:get/get.dart';
 import '../../../data/models/absence.dart';
-import '../../../data/providers/pointage_provider.dart'; // Import PointageProvider
+import '../../../data/providers/pointage_provider.dart';
 
 class PointageController extends GetxController {
-  final PointageProvider _pointageProvider = Get.find<PointageProvider>(); // Inject PointageProvider
+  final PointageProvider _pointageProvider = Get.find<PointageProvider>();
   final RxList<Absence> absences = <Absence>[].obs;
-  final RxBool isLoading = true.obs; // Set to true initially to show loading for initial fetch
+  final RxBool isLoading = true.obs;
   final RxString error = ''.obs;
 
-  // Example: ID of the current course, replace with actual dynamic value
+  // Exemple: ID du cours actuel, à remplacer par une valeur dynamique
   final String _idCoursActuel = "FLUTTER_L3_2024"; 
 
   @override
@@ -31,6 +31,7 @@ class PointageController extends GetxController {
     }
   }
 
+  // Version locale - recherche dans la liste des absences déjà chargées
   Absence? getAbsenceByMatricule(String matricule) {
     try {
       return absences.firstWhere((a) => a.matricule == matricule);
@@ -38,34 +39,69 @@ class PointageController extends GetxController {
       return null;
     }
   }
+  
+  // Nouvelle méthode: recherche d'un étudiant par matricule auprès du backend
+  Future<Absence?> rechercherEtudiantParMatricule(String matricule) async {
+    try {
+      isLoading.value = true;
+      error.value = '';
+      
+      // Appel à la nouvelle méthode de l'API
+      final absence = await _pointageProvider.rechercherEtudiantParMatricule(matricule);
+      
+      // Si l'étudiant est trouvé et n'est pas déjà dans la liste des absences, l'ajouter
+      if (absence != null) {
+        final existingIndex = absences.indexWhere((a) => a.matricule == matricule);
+        if (existingIndex == -1) {
+          absences.add(absence);
+        } else {
+          // Si l'étudiant est déjà dans la liste, mettre à jour ses informations
+          absences[existingIndex] = absence;
+        }
+      }
+      
+      return absence;
+    } catch (e) {
+      error.value = "Erreur lors de la recherche de l'étudiant: $e";
+      return null;
+    } finally {
+      isLoading.value = false;
+    }
+  }
 
   Future<void> marquerPresent(String matricule) async {
-    final index = absences.indexWhere((a) => a.matricule == matricule);
-    if (index != -1) {
-      // Optimistic update: update UI immediately
-      // final originalAbsence = absences[index]; // Keep original for potential rollback
-      absences[index] = absences[index].copyWith(status: 'present');
-      
-      try {
-        // Call provider to update backend
+    try {
+      final index = absences.indexWhere((a) => a.matricule == matricule);
+      if (index != -1) {
+        // Mise à jour optimiste: mettre à jour l'UI immédiatement
+        absences[index] = absences[index].copyWith(status: 'present');
+        
+        // Appel au backend pour mettre à jour le statut
         final updatedAbsence = await _pointageProvider.marquerEtudiantPresent(matricule, _idCoursActuel);
         if (updatedAbsence != null) {
-          // Update with data from backend if necessary (e.g., if backend returns more fields or confirms ID)
-          absences[index] = updatedAbsence; 
-        } else {
-          // Handle case where backend update fails but no error was thrown by provider
-          // Potentially rollback: absences[index] = originalAbsence;
-          // Get.snackbar("Avertissement", "Le statut n'a pas pu être confirmé par le serveur.");
+          // Mettre à jour avec les données du backend si nécessaire
+          absences[index] = updatedAbsence;
         }
-      } catch (e) {
-        // Rollback UI change if backend update fails
-        // absences[index] = originalAbsence;
-        // For simplicity, we'll just show an error. A more robust app might rollback.
-        absences[index] = absences[index].copyWith(status: 'absent'); // Simple rollback for demo
-        Get.snackbar("Erreur", "Impossible de marquer l'étudiant comme présent: $e");
-        // Re-throw if you want the UI to handle the error state more explicitly
-        // rethrow;
+      } else {
+        // Si l'étudiant n'est pas dans la liste locale, essayer de le rechercher d'abord
+        final absence = await rechercherEtudiantParMatricule(matricule);
+        if (absence != null) {
+          // Puis le marquer présent
+          await _pointageProvider.marquerEtudiantPresent(matricule, _idCoursActuel);
+          // Mettre à jour son statut dans la liste locale
+          final newIndex = absences.indexWhere((a) => a.matricule == matricule);
+          if (newIndex != -1) {
+            absences[newIndex] = absences[newIndex].copyWith(status: 'present');
+          }
+        }
       }
+    } catch (e) {
+      // En cas d'erreur, restaurer le statut "absent" ou afficher un message d'erreur
+      final index = absences.indexWhere((a) => a.matricule == matricule);
+      if (index != -1) {
+        absences[index] = absences[index].copyWith(status: 'absent');
+      }
+      Get.snackbar("Erreur", "Impossible de marquer l'étudiant comme présent: $e");
     }
   }
 }
