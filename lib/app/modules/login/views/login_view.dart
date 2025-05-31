@@ -51,7 +51,7 @@ class LoginView extends GetView<LoginController> {
                   
                   // Formulaire de connexion
                   const Text(
-                    'Log In',
+                    'Connexion',
                     style: TextStyle(
                       fontSize: 28,
                       fontWeight: FontWeight.bold,
@@ -65,7 +65,7 @@ class LoginView extends GetView<LoginController> {
                   TextField(
                     onChanged: controller.setEmail,
                     decoration: InputDecoration(
-                      hintText: 'username@example.com',
+                      hintText: 'email@example.com',
                       hintStyle: const TextStyle(color: Color(0xFFB0A89B)),
                       enabledBorder: OutlineInputBorder(
                         borderRadius: BorderRadius.circular(8),
@@ -76,6 +76,7 @@ class LoginView extends GetView<LoginController> {
                         borderSide: const BorderSide(color: Color(0xFFD68D30), width: 2),
                       ),
                       contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 16),
+                      prefixIcon: const Icon(Icons.email, color: Color(0xFFD68D30)),
                     ),
                     keyboardType: TextInputType.emailAddress,
                     autocorrect: false,
@@ -83,7 +84,7 @@ class LoginView extends GetView<LoginController> {
                   const SizedBox(height: 20),
                   
                   // Champ mot de passe
-                  TextField(
+                  Obx(() => TextField(
                     onChanged: controller.setPassword,
                     decoration: InputDecoration(
                       hintText: '••••••••••',
@@ -97,9 +98,19 @@ class LoginView extends GetView<LoginController> {
                         borderSide: const BorderSide(color: Color(0xFFD68D30), width: 2),
                       ),
                       contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 16),
+                      prefixIcon: const Icon(Icons.lock, color: Color(0xFFD68D30)),
+                      suffixIcon: IconButton(
+                        icon: Icon(
+                          controller.obscurePassword.value 
+                              ? Icons.visibility_off 
+                              : Icons.visibility,
+                          color: const Color(0xFFD68D30),
+                        ),
+                        onPressed: controller.togglePasswordVisibility,
+                      ),
                     ),
-                    obscureText: true,
-                  ),
+                    obscureText: controller.obscurePassword.value,
+                  )),
                   const SizedBox(height: 32),
                   
                   // Bouton de connexion
@@ -123,7 +134,7 @@ class LoginView extends GetView<LoginController> {
                             ),
                           )
                         : const Text(
-                            'Log In',
+                            'Se connecter',
                             style: TextStyle(
                               fontSize: 16,
                               fontWeight: FontWeight.w600,
@@ -131,6 +142,19 @@ class LoginView extends GetView<LoginController> {
                             ),
                           ),
                   )),
+                  const SizedBox(height: 16),
+                  
+                  // Message d'information sur le backend
+                  const Center(
+                    child: Text(
+                      'Connexion au serveur: https://localhost:8081',
+                      style: TextStyle(
+                        fontSize: 12,
+                        color: Color(0xFF3D2914),
+                        fontStyle: FontStyle.italic,
+                      ),
+                    ),
+                  ),
                   const Spacer(),
                 ],
               ),
@@ -150,26 +174,33 @@ class CurvedPainter extends CustomPainter {
       ..color = Colors.white
       ..style = PaintingStyle.fill;
 
-    final path = Path()
-      ..moveTo(0, size.height * 0.15)
-      ..quadraticBezierTo(
-        size.width * 0.7,
-        0,
-        size.width,
-        size.height * 0.15,
-      )
-      ..lineTo(size.width, size.height * 0.85)
-      ..quadraticBezierTo(
-        size.width * 0.3,
-        size.height,
-        0,
-        size.height * 0.85,
-      )
-      ..close();
-
+    final path = Path();
+    path.lineTo(0, size.height * 0.33);
+    
+    final firstControlPoint = Offset(size.width * 0.25, size.height * 0.4);
+    final firstEndPoint = Offset(size.width * 0.5, size.height * 0.3);
+    path.quadraticBezierTo(
+      firstControlPoint.dx,
+      firstControlPoint.dy,
+      firstEndPoint.dx,
+      firstEndPoint.dy,
+    );
+    
+    final secondControlPoint = Offset(size.width * 0.75, size.height * 0.2);
+    final secondEndPoint = Offset(size.width, size.height * 0.25);
+    path.quadraticBezierTo(
+      secondControlPoint.dx,
+      secondControlPoint.dy,
+      secondEndPoint.dx,
+      secondEndPoint.dy,
+    );
+    
+    path.lineTo(size.width, 0);
+    path.close();
+    
     canvas.drawPath(path, paint);
   }
 
   @override
   bool shouldRepaint(CustomPainter oldDelegate) => false;
-} 
+}

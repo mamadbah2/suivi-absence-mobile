@@ -25,56 +25,56 @@ class _PointagePageState extends State<PointagePage> {
   Absence? _absenceTrouvee;
   String? _messageErreur;
 
-  void _rechercherEtMarquerPresent(String matricule) async { // Combined search and mark present
-    if (matricule.isEmpty) {
-      setState(() {
-        _absenceTrouvee = null;
-        _messageErreur = "Le matricule ne peut pas être vide.";
-      });
-      return;
-    }
+  // void _rechercherEtMarquerPresent(String matricule) async { // Combined search and mark present
+  //   if (matricule.isEmpty) {
+  //     setState(() {
+  //       _absenceTrouvee = null;
+  //       _messageErreur = "Le matricule ne peut pas être vide.";
+  //     });
+  //     return;
+  //   }
 
-    final absence = _pointageController.getAbsenceByMatricule(matricule);
-    setState(() {
-      _absenceTrouvee = absence;
-      if (absence == null) {
-        _messageErreur = "Aucun étudiant trouvé pour ce matricule.";
-      } else {
-        _messageErreur = null;
-        // Si l'étudiant est trouvé et est absent, le marquer présent
-        if (absence.status == 'absent') {
-          _pointageController.marquerPresent(matricule).then((_) {
-            // Rafraîchir l'affichage de _absenceTrouvee pour refléter le nouveau statut
-            setState(() {
-              _absenceTrouvee = _pointageController.getAbsenceByMatricule(matricule);
-            });
-            Get.snackbar(
-              'Succès',
-              'Pointage effectué pour ${_absenceTrouvee!.prenom} ${_absenceTrouvee!.nom}',
-              snackPosition: SnackPosition.BOTTOM,
-            );
-          }).catchError((error) {
-             setState(() {
-              // En cas d'erreur lors du marquage, _absenceTrouvee peut toujours être l'ancien état
-              // ou vous pouvez choisir de le réinitialiser.
-              _messageErreur = "Erreur lors du marquage présent: $error";
-            });
-            Get.snackbar(
-              'Erreur',
-              'Impossible de marquer l\'étudiant comme présent: $error',
-              snackPosition: SnackPosition.BOTTOM,
-            );
-          });
-        } else if (absence.status == 'present') {
-           Get.snackbar(
-              'Info',
-              '${_absenceTrouvee!.prenom} ${_absenceTrouvee!.nom} est déjà marqué(e) présent(e).',
-              snackPosition: SnackPosition.BOTTOM,
-            );
-        }
-      }
-    });
-  }
+  //   final absence = _pointageController.getAbsenceByMatricule(matricule);
+  //   setState(() {
+  //     _absenceTrouvee = absence;
+  //     if (absence == null) {
+  //       _messageErreur = "Aucun étudiant trouvé pour ce matricule.";
+  //     } else {
+  //       _messageErreur = null;
+  //       // Si l'étudiant est trouvé et est absent, le marquer présent
+  //       if (absence.status == 'absent') {
+  //         _pointageController.marquerPresent(matricule).then((_) {
+  //           // Rafraîchir l'affichage de _absenceTrouvee pour refléter le nouveau statut
+  //           setState(() {
+  //             _absenceTrouvee = _pointageController.getAbsenceByMatricule(matricule);
+  //           });
+  //           Get.snackbar(
+  //             'Succès',
+  //             'Pointage effectué pour ${_absenceTrouvee!.prenom} ${_absenceTrouvee!.nom}',
+  //             snackPosition: SnackPosition.BOTTOM,
+  //           );
+  //         }).catchError((error) {
+  //            setState(() {
+  //             // En cas d'erreur lors du marquage, _absenceTrouvee peut toujours être l'ancien état
+  //             // ou vous pouvez choisir de le réinitialiser.
+  //             _messageErreur = "Erreur lors du marquage présent: $error";
+  //           });
+  //           Get.snackbar(
+  //             'Erreur',
+  //             'Impossible de marquer l\'étudiant comme présent: $error',
+  //             snackPosition: SnackPosition.BOTTOM,
+  //           );
+  //         });
+  //       } else if (absence.status == 'present') {
+  //          Get.snackbar(
+  //             'Info',
+  //             '${_absenceTrouvee!.prenom} ${_absenceTrouvee!.nom} est déjà marqué(e) présent(e).',
+  //             snackPosition: SnackPosition.BOTTOM,
+  //           );
+  //       }
+  //     }
+  //   });
+  // }
 
   void _rechercherEtAfficherDetails(String matricule) {
     if (matricule.isEmpty) {

@@ -1,23 +1,24 @@
+import 'package:flutter/material.dart';
 import 'package:get/get.dart';
-import '../../../data/providers/auth_provider.dart'; // Changed import
+import '../../../data/providers/auth_provider.dart';
 import '../../../data/controllers/auth_controller.dart';
 
 class LoginController extends GetxController {
-  //Le login controller est le lien entre la vue et le provider
-  
-  final AuthProvider _authProvider; // Changed to AuthProvider
+  final AuthProvider _authProvider;
   final AuthController _authController;
   
-  LoginController(this._authProvider, this._authController); // Updated constructor
+  LoginController(this._authProvider, this._authController);
 
   final email = ''.obs;
   final password = ''.obs;
   final isLoading = false.obs;
+  final obscurePassword = true.obs; // Pour gérer la visibilité du mot de passe
   
   @override
   void onInit() {
     super.onInit();
-    print('LoginController initialized');
+    // Vérifier si l'utilisateur a déjà un token valide
+    checkAuthStatus();
   }
 
   @override
@@ -26,14 +27,35 @@ class LoginController extends GetxController {
     print('LoginController ready');
   }
   
+  // Méthode pour vérifier l'état d'authentification au démarrage de l'application
+  Future<void> checkAuthStatus() async {
+    try {
+      final isValid = await _authProvider.validateToken();
+      if (isValid) {
+        // Si le token est valide, on peut rediriger directement
+        // mais on a besoin de récupérer les informations utilisateur d'abord
+        final userData = await _authProvider.getUserFromStorage();
+        if (userData != null) {
+          _authController.setUser(userData);
+          _redirectBasedOnRole(userData.role);
+        }
+      }
+    } catch (e) {
+      // Si une erreur se produit, on reste sur la page de login
+      print('Erreur lors de la vérification du statut d\'authentification: $e');
+    }
+  }
+  
   void setEmail(String value) {
     email.value = value;
-    print('Email set: $value');
   }
   
   void setPassword(String value) {
     password.value = value;
-    print('Password set: $value');
+  }
+
+  void togglePasswordVisibility() {
+    obscurePassword.value = !obscurePassword.value;
   }
 
   Future<void> login() async {
@@ -42,6 +64,8 @@ class LoginController extends GetxController {
         'Erreur',
         'Veuillez remplir tous les champs',
         snackPosition: SnackPosition.BOTTOM,
+        backgroundColor: Colors.red.withOpacity(0.8),
+        colorText: Colors.white,
       );
       return;
     }
@@ -50,32 +74,49 @@ class LoginController extends GetxController {
     print('Tentative de connexion avec: ${email.value}');
     
     try {
-      // Call login on _authProvider directly
-      final user = await _authProvider.login(email.value, password.value); 
-      // Since _authProvider.login returns UserModel (non-nullable) or throws,
-      // we can assume user is not null here if no exception was thrown.
+      final user = await _authProvider.login(email.value, password.value);
       print('Connexion réussie');
       _authController.setUser(user);
       
-      // Redirection en fonction du rôle de l'utilisateur
-      if (user.role == 'etudiant') {
-        print('Redirection vers la page étudiant');
-        Get.offAllNamed('/etudiant'); // Utilisation de offAllNamed pour effacer la pile de navigation
-      } else {
-        print('Redirection vers la page pointage');
-        Get.offAllNamed('/pointage');
-      }
+      // Rediriger l'utilisateur vers la page appropriée selon son rôle
+      _redirectBasedOnRole(user.role);
       
     } catch (e) {
       print('Erreur de connexion: $e');
       Get.snackbar(
-        'Erreur',
-        // Display the actual error message from the provider if it's an Exception
+        'Erreur de connexion',
         e is Exception ? e.toString().replaceFirst('Exception: ', '') : 'Une erreur est survenue',
         snackPosition: SnackPosition.BOTTOM,
+        backgroundColor: Colors.red.withOpacity(0.8),
+        colorText: Colors.white,
+        duration: const Duration(seconds: 3),
       );
     } finally {
       isLoading.value = false;
+    }
+  }
+  
+  void _redirectBasedOnRole(String role) {
+    switch (role.toLowerCase()) {
+      case 'etudiant':
+        print('Redirection vers la page étudiant');
+        Get.offAllNamed('/etudiant');
+        break;
+      case 'enseignant':
+      case 'admin':
+      case 'professeur':
+        print('Redirection vers la page pointage');
+        Get.offAllNamed('/pointage');
+        break;
+      default:
+        // Si le rôle n'est pas reconnu, on déconnecte l'utilisateur par sécurité
+        _authProvider.logout();
+        _authController.clearUser();
+        Get.snackbar(
+          'Erreur',
+          'Rôle utilisateur non reconnu',
+          snackPosition: SnackPosition.BOTTOM,
+        );
     }
   }
 }
