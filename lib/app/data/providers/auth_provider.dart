@@ -22,7 +22,7 @@ class AuthProvider extends GetConnect {
           'prenom': 'John',
           'email': email,
           'password': password,
-          'role': 'Vigile',
+          'role': 'Etudiant',
         },
         statusCode: 200,
       );

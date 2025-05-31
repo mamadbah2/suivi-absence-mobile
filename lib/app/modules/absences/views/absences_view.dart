@@ -44,13 +44,13 @@ class AbsencesView extends GetView<AbsencesController> {
         ),
       ),
       centerTitle: true,
-      actions: [
+      actions: const [
         Padding(
-          padding: const EdgeInsets.only(right: 16.0),
+          padding:  EdgeInsets.only(right: 16.0),
           child: Column(
             mainAxisAlignment: MainAxisAlignment.center,
             crossAxisAlignment: CrossAxisAlignment.end,
-            children: const [
+            children:  [
               Text('Licence 2 CLRS',
                   style: TextStyle(fontSize: 14, color: Colors.white)),
               Text('DK-30352',
@@ -150,10 +150,10 @@ class AbsencesView extends GetView<AbsencesController> {
       ),
       child: Row(
         mainAxisAlignment: MainAxisAlignment.spaceBetween,
-        children: [
-          Column(
+        children:  [
+          const Column(
             crossAxisAlignment: CrossAxisAlignment.start,
-            children: const [
+            children:  [
               Text('Absence cumulée',
                   style:
                       TextStyle(fontWeight: FontWeight.w600, color: ismBrown)),

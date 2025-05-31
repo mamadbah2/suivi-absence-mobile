@@ -51,13 +51,13 @@ class EtudiantProvider extends GetConnect {
         {
           'id': '1',
           'date': '2024-01-15',
-          'cours': 'Mathématiques',
+          'cours': 'PHP',
           'justifie': false,
         },
         {
           'id': '2',
           'date': '2024-02-01',
-          'cours': 'Physique',
+          'cours': 'Fluter',
           'justifie': true,
         },
       ],
