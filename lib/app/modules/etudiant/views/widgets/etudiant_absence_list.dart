@@ -1,4 +1,8 @@
 import 'package:flutter/material.dart';
+import 'package:get/get.dart';
+import 'package:qr_flutter/qr_flutter.dart';
+import '../../controllers/etudiant_controller.dart';
+import '../../../../data/models/absence.dart';
 
 // Définition des couleurs ISM avec des nuances améliorées
 const Color ismBrownDark = Color(0xFF43291b);
@@ -15,6 +19,7 @@ class EtudiantAbsenceList extends StatelessWidget {
   Widget build(BuildContext context) {
     final screenHeight = MediaQuery.of(context).size.height;
     final isSmallScreen = screenHeight < 700;
+    final EtudiantController controller = Get.find<EtudiantController>();
 
     return Scaffold(
       backgroundColor: ismCream,
@@ -30,19 +35,19 @@ class EtudiantAbsenceList extends StatelessWidget {
         ),
         centerTitle: true,
         actions: [
-          Padding(
+          Obx(() => Padding(
             padding: const EdgeInsets.only(right: 16.0),
             child: Column(
               mainAxisAlignment: MainAxisAlignment.center,
               crossAxisAlignment: CrossAxisAlignment.end,
-              children: const [
-                Text('Licence 2 CLRS',
-                    style: TextStyle(fontSize: 14, color: Colors.white)),
-                Text('DK-30352',
-                    style: TextStyle(fontSize: 12, color: Colors.white70)),
+              children: [
+                Text(controller.classe.value,
+                    style: const TextStyle(fontSize: 14, color: Colors.white)),
+                Text(controller.matricule.value,
+                    style: const TextStyle(fontSize: 12, color: Colors.white70)),
               ],
             ),
-          ),
+          )),
         ],
         elevation: 4,
         iconTheme: const IconThemeData(color: Colors.white),
@@ -52,163 +57,135 @@ class EtudiantAbsenceList extends StatelessWidget {
           ),
         ),
       ),
-      body: SingleChildScrollView(
-        padding: EdgeInsets.all(isSmallScreen ? 12.0 : 16.0),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            _buildStudentProfileWithQR(context, isSmallScreen),
+      body: Obx(() => controller.isLoading.value
+        ? const Center(child: CircularProgressIndicator(color: ismOrange))
+        : SingleChildScrollView(
+          padding: EdgeInsets.all(isSmallScreen ? 12.0 : 16.0),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              _buildStudentProfileWithQR(context, isSmallScreen, controller),
 
-            // Statistiques
-            Container(
-              padding: const EdgeInsets.all(16.0),
-              decoration: BoxDecoration(
-                color: Colors.white,
-                borderRadius: BorderRadius.circular(12),
-                boxShadow: [
-                  BoxShadow(
-                    color: ismBrown.withOpacity(0.1),
-                    blurRadius: 8,
-                    offset: const Offset(0, 4),
-                  ),
-                ],
-                border: Border.all(color: ismBrown.withOpacity(0.2)),
-              ),
-              child: Row(
-                mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                children: [
-                  Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: const [
-                      Text('Absence cumulée',
-                          style: TextStyle(
-                              fontWeight: FontWeight.w600, color: ismBrown)),
-                      SizedBox(height: 8),
-                      Text('Absence soumise',
-                          style: TextStyle(
-                              fontWeight: FontWeight.w600, color: ismBrown)),
-                      SizedBox(height: 8),
-                      Text('Retards cumulés',
-                          style: TextStyle(
-                              fontWeight: FontWeight.w600, color: ismBrown)),
-                      SizedBox(height: 8),
-                      Text('Absence restante',
-                          style: TextStyle(
-                              fontWeight: FontWeight.w600, color: ismBrown)),
-                    ],
-                  ),
-                  Column(
-                    crossAxisAlignment: CrossAxisAlignment.end,
-                    children: [
-                      const Text('31h',
-                          style: TextStyle(
-                              color: ismOrange,
-                              fontWeight: FontWeight.bold)),
-                      const SizedBox(height: 8),
-                      const Text('2h',
-                          style: TextStyle(
-                              color: ismOrange,
-                              fontWeight: FontWeight.bold)),
-                      const SizedBox(height: 8),
-                      const Text('8h',
-                          style: TextStyle(
-                              color: ismOrange,
-                              fontWeight: FontWeight.bold)),
-                      const SizedBox(height: 8),
-                      Text('41h',
-                          style: TextStyle(
-                              color: ismBrownDark,
-                              fontWeight: FontWeight.bold)),
-                    ],
-                  ),
-                ],
-              ),
-            ),
-
-            const SizedBox(height: 24),
-
-            // Section "Aujourd'hui"
-            Padding(
-              padding: const EdgeInsets.symmetric(horizontal: 8.0),
-              child: Row(
-                children: [
-                  const Icon(Icons.calendar_today,
-                      color: ismBrownDark, size: 20),
-                  const SizedBox(width: 8),
-                  const Text(
-                    'Aujourd\'hui',
-                    style: TextStyle(
-                      fontSize: 18,
-                      fontWeight: FontWeight.bold,
-                      color: ismBrownDark,
+              // Statistiques
+              Container(
+                padding: const EdgeInsets.all(16.0),
+                decoration: BoxDecoration(
+                  color: Colors.white,
+                  borderRadius: BorderRadius.circular(12),
+                  boxShadow: [
+                    BoxShadow(
+                      color: ismBrown.withOpacity(0.1),
+                      blurRadius: 8,
+                      offset: const Offset(0, 4),
                     ),
-                  ),
-                  const Spacer(),
-                  TextButton(
-                    onPressed: () {},
-                    child: Row(
+                  ],
+                  border: Border.all(color: ismBrown.withOpacity(0.2)),
+                ),
+                child: Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                  children: [
+                    Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
                       children: const [
-                        Text('Voir tout', style: TextStyle(color: ismOrange)),
-                        SizedBox(width: 4),
-                        Icon(Icons.chevron_right, color: ismOrange, size: 20),
+                        Text('Absence cumulée',
+                            style: TextStyle(
+                                fontWeight: FontWeight.w600, color: ismBrown)),
+                        SizedBox(height: 8),
+                        Text('Absence soumise',
+                            style: TextStyle(
+                                fontWeight: FontWeight.w600, color: ismBrown)),
+                        SizedBox(height: 8),
+                        Text('Retards cumulés',
+                            style: TextStyle(
+                                fontWeight: FontWeight.w600, color: ismBrown)),
+                        SizedBox(height: 8),
+                        Text('Absence restante',
+                            style: TextStyle(
+                                fontWeight: FontWeight.w600, color: ismBrown)),
                       ],
                     ),
-                  ),
-                ],
+                    Column(
+                      crossAxisAlignment: CrossAxisAlignment.end,
+                      children: [
+                        Text('${controller.absenceCumulee}h',
+                            style: const TextStyle(
+                                color: ismOrange,
+                                fontWeight: FontWeight.bold)),
+                        const SizedBox(height: 8),
+                        Text('${controller.absenceSoumise}h',
+                            style: const TextStyle(
+                                color: ismOrange,
+                                fontWeight: FontWeight.bold)),
+                        const SizedBox(height: 8),
+                        Text('${controller.retardsCumules}h',
+                            style: const TextStyle(
+                                color: ismOrange,
+                                fontWeight: FontWeight.bold)),
+                        const SizedBox(height: 8),
+                        Text('${controller.absenceRestante}h',
+                            style: const TextStyle(
+                                color: ismBrownDark,
+                                fontWeight: FontWeight.bold)),
+                      ],
+                    ),
+                  ],
+                ),
               ),
-            ),
 
-            const SizedBox(height: 12),
+              const SizedBox(height: 24),
 
-            // Liste des absences/retards
-            _buildAbsenceItem(
-              context: context,
-              course: 'Développement Flutter',
-              type: 'Retard',
-              date: '14/02/2024',
-              start: '8h',
-              end: '12h',
-              isRetard: true,
-              isSmallScreen: isSmallScreen,
-            ),
+              // Section "Aujourd'hui"
+              Padding(
+                padding: const EdgeInsets.symmetric(horizontal: 8.0),
+                child: Row(
+                  children: [
+                    const Icon(Icons.calendar_today,
+                        color: ismBrownDark, size: 20),
+                    const SizedBox(width: 8),
+                    const Text(
+                      'Aujourd\'hui',
+                      style: TextStyle(
+                        fontSize: 18,
+                        fontWeight: FontWeight.bold,
+                        color: ismBrownDark,
+                      ),
+                    ),
+                    const Spacer(),
+                    TextButton(
+                      onPressed: () {},
+                      child: Row(
+                        children: const [
+                          Text('Voir tout', style: TextStyle(color: ismOrange)),
+                          SizedBox(width: 4),
+                          Icon(Icons.chevron_right, color: ismOrange, size: 20),
+                        ],
+                      ),
+                    ),
+                  ],
+                ),
+              ),
 
-            const SizedBox(height: 12),
+              const SizedBox(height: 12),
 
-            _buildAbsenceItem(
-              context: context,
-              course: 'Gestion de Projet',
-              type: 'Absence',
-              date: '14/02/2024',
-              start: '8h',
-              end: '12h',
-              isRetard: false,
-              isSmallScreen: isSmallScreen,
-            ),
-
-            const SizedBox(height: 12),
-
-            _buildAbsenceItemWithStatus(
-              context: context,
-              course: 'Base de données',
-              type: 'Absence',
-              date: '14/02/2024',
-              start: '14h',
-              end: '18h',
-              isRetard: false,
-              status: 'Justifiée',
-              statusColor: Colors.green,
-              isSmallScreen: isSmallScreen,
-            ),
-          ],
+              // Liste des absences/retards d'aujourd'hui
+              ...controller.getAbsencesForToday().map((absence) => 
+                _buildAbsenceItemFromAbsence(
+                  context: context, 
+                  absence: absence, 
+                  isSmallScreen: isSmallScreen
+                )
+              ).toList()
+            ],
+          ),
         ),
       ),
     );
   }
 
-  Widget _buildStudentProfileWithQR(BuildContext context, bool isSmallScreen) {
-    return GestureDetector(
+  Widget _buildStudentProfileWithQR(BuildContext context, bool isSmallScreen, EtudiantController controller) {
+    return Obx(() => GestureDetector(
       onTap: () {
-        _showFullSizeProfile(context);
+        _showFullSizeProfile(context, controller);
       },
       child: Center(
         child: Column(
@@ -249,18 +226,18 @@ class EtudiantAbsenceList extends StatelessWidget {
               ],
             ),
             const SizedBox(height: 12),
-            const Text(
-              'Ousmane Ba',
-              style: TextStyle(
+            Text(
+              '${controller.prenom.value} ${controller.nom.value}',
+              style: const TextStyle(
                 fontSize: 18,
                 fontWeight: FontWeight.bold,
                 color: ismBrownDark,
               ),
             ),
             const SizedBox(height: 4),
-            const Text(
-              'Étudiant en Informatique',
-              style: TextStyle(
+            Text(
+              'Étudiant en ${controller.classe.value}',
+              style: const TextStyle(
                 fontSize: 14,
                 color: ismBrown,
               ),
@@ -269,10 +246,10 @@ class EtudiantAbsenceList extends StatelessWidget {
           ],
         ),
       ),
-    );
+    ));
   }
 
-  void _showFullSizeProfile(BuildContext context) {
+  void _showFullSizeProfile(BuildContext context, EtudiantController controller) {
     showDialog(
       context: context,
       builder: (BuildContext context) {
@@ -317,22 +294,22 @@ class EtudiantAbsenceList extends StatelessWidget {
                 ),
                 const SizedBox(height: 20),
                 // Informations étudiant
-                const Text(
-                  'Ousmane Ba',
-                  style: TextStyle(
+                Obx(() => Text(
+                  '${controller.prenom.value} ${controller.nom.value}',
+                  style: const TextStyle(
                     fontSize: 22,
                     fontWeight: FontWeight.bold,
                     color: ismBrownDark,
                   ),
-                ),
+                )),
                 const SizedBox(height: 4),
-                const Text(
-                  'Licence 2 CLRS - DK-30352',
-                  style: TextStyle(
+                Obx(() => Text(
+                  '${controller.classe.value} - ${controller.matricule.value}',
+                  style: const TextStyle(
                     fontSize: 16,
                     color: ismBrown,
                   ),
-                ),
+                )),
                 const SizedBox(height: 20),
                 // Code QR
                 Container(
@@ -344,19 +321,21 @@ class EtudiantAbsenceList extends StatelessWidget {
                   ),
                   child: Column(
                     children: [
-                      Image.asset(
-                        'assets/images/QR_Code_example.png',
-                        width: 180,
-                        height: 180,
-                      ),
+                      Obx(() => QrImageView(
+                        data: controller.matricule.value,
+                        version: QrVersions.auto,
+                        size: 180.0,
+                        gapless: true,
+                        foregroundColor: ismBrownDark,
+                      )),
                       const SizedBox(height: 8),
-                      const Text(
-                        'ID: STUD-2024-ISM-12345',
-                        style: TextStyle(
+                      Obx(() => Text(
+                        controller.matricule.value,
+                        style: const TextStyle(
                           fontSize: 14,
                           color: ismBrown,
                         ),
-                      ),
+                      )),
                     ],
                   ),
                 ),
@@ -383,27 +362,31 @@ class EtudiantAbsenceList extends StatelessWidget {
     );
   }
 
-  Widget _buildAbsenceItem({
+  Widget _buildAbsenceItemFromAbsence({
     required BuildContext context,
-    required String course,
-    required String type,
-    required String date,
-    required String start,
-    required String end,
-    required bool isRetard,
+    required Absence absence,
     required bool isSmallScreen,
   }) {
+    final bool isRetard = absence.type?.toLowerCase() == 'retard';
+    final String formattedDate = '${absence.date.day}/${absence.date.month}/${absence.date.year}';
+    final String start = absence.heure;
+    // Éviter l'erreur si duree est null
+    final String end = absence.duree?.split('-').lastOrNull ?? start;
+    
     return _buildAbsenceItemWithStatus(
       context: context,
-      course: course,
-      type: type,
-      date: date,
+      course: absence.module,
+      type: absence.type ?? 'Absence',
+      date: formattedDate,
       start: start,
       end: end,
       isRetard: isRetard,
-      status: null,
-      statusColor: null,
+      status: absence.justification,
+      statusColor: absence.justification != null ? 
+        (absence.justification!.toLowerCase() == 'justifiée' ? Colors.green : Colors.orange) : 
+        null,
       isSmallScreen: isSmallScreen,
+      absenceId: absence.id,
     );
   }
 
@@ -418,6 +401,7 @@ class EtudiantAbsenceList extends StatelessWidget {
     String? status,
     Color? statusColor,
     required bool isSmallScreen,
+    required String absenceId,
   }) {
     final Color badgeBg =
         isRetard ? ismOrangeLight.withOpacity(0.18) : ismOrange.withOpacity(0.18);
@@ -427,7 +411,7 @@ class EtudiantAbsenceList extends StatelessWidget {
     return InkWell(
       borderRadius: BorderRadius.circular(12),
       onTap: () {
-        _showAbsenceDetails(context, course, type, date, start, end, isRetard);
+        _showAbsenceDetails(context, course, type, date, start, end, isRetard, absenceId);
       },
       child: Container(
         padding: EdgeInsets.all(isSmallScreen ? 12.0 : 16.0),
@@ -517,7 +501,7 @@ class EtudiantAbsenceList extends StatelessWidget {
                 IconButton(
                   icon: const Icon(Icons.more_vert, color: ismBrown),
                   onPressed: () {
-                    _showJustificationDialog(context, course);
+                    _showJustificationDialog(context, course, absenceId);
                   },
                   padding: EdgeInsets.zero,
                   constraints: const BoxConstraints(),
@@ -538,6 +522,7 @@ class EtudiantAbsenceList extends StatelessWidget {
     String start,
     String end,
     bool isRetard,
+    String absenceId,
   ) {
     showModalBottomSheet(
       context: context,
@@ -602,7 +587,7 @@ class EtudiantAbsenceList extends StatelessWidget {
                     child: ElevatedButton(
                       onPressed: () {
                         Navigator.pop(context);
-                        _showJustificationDialog(context, course);
+                        _showJustificationDialog(context, course, absenceId);
                       },
                       style: ElevatedButton.styleFrom(
                         backgroundColor: ismOrange,
@@ -647,7 +632,9 @@ class EtudiantAbsenceList extends StatelessWidget {
     );
   }
 
-  void _showJustificationDialog(BuildContext context, String courseName) {
+  void _showJustificationDialog(BuildContext context, String courseName, String absenceId) {
+    final EtudiantController controller = Get.find<EtudiantController>();
+    
     showDialog(
       context: context,
       builder: (BuildContext context) {
@@ -726,7 +713,10 @@ class EtudiantAbsenceList extends StatelessWidget {
                 ),
               ),
               onPressed: () {
-                // Traitement de la justification
+                // Traitement de la justification avec le contrôleur
+                if (absenceId.isNotEmpty && selectedReason != null) {
+                  controller.envoyerJustification(absenceId, selectedReason!, comment);
+                }
                 Navigator.of(context).pop();
                 ScaffoldMessenger.of(context).showSnackBar(
                   SnackBar(
