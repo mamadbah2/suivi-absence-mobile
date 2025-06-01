@@ -3,10 +3,11 @@ import '../../../data/models/absence.dart';
 import '../../../data/providers/pointage_provider.dart';
 
 class PointageController extends GetxController {
-  final PointageProvider _pointageProvider = Get.find<PointageProvider>();
+  late final PointageProvider _pointageProvider;
   final RxList<Absence> absences = <Absence>[].obs;
   final RxBool isLoading = true.obs;
   final RxString error = ''.obs;
+  final RxBool isInitialized = false.obs;
 
   // Exemple: ID du cours actuel, à remplacer par une valeur dynamique
   final String _idCoursActuel = "FLUTTER_L3_2024"; 
@@ -14,10 +15,35 @@ class PointageController extends GetxController {
   @override
   void onInit() {
     super.onInit();
-    fetchListeAbsences();
+    _initializeProvider();
+  }
+
+  void _initializeProvider() {
+    try {
+      // Initialiser le provider en toute sécurité
+      _pointageProvider = Get.find<PointageProvider>();
+      isInitialized.value = true;
+      // Récupérer les données seulement après avoir confirmé que le provider est disponible
+      fetchListeAbsences();
+    } catch (e) {
+      print("Erreur lors de l'initialisation du PointageProvider: $e");
+      error.value = "Erreur d'initialisation: $e";
+      isLoading.value = false;
+      // Retry initialization after a short delay, useful when the app just started
+      Future.delayed(const Duration(seconds: 2), () {
+        if (Get.isRegistered<PointageProvider>()) {
+          _initializeProvider();
+        }
+      });
+    }
   }
 
   Future<void> fetchListeAbsences() async {
+    if (!isInitialized.value) {
+      error.value = "Le provider n'est pas encore initialisé";
+      return;
+    }
+    
     try {
       isLoading.value = true;
       error.value = '';
@@ -25,7 +51,14 @@ class PointageController extends GetxController {
       absences.assignAll(result);
     } catch (e) {
       error.value = "Erreur lors de la récupération de la liste des étudiants: $e";
-      Get.snackbar("Erreur", "Impossible de charger la liste des étudiants.");
+      // Afficher un message seulement si c'est un appel explicite, pas au démarrage
+      if (!isLoading.value) {
+        Get.snackbar(
+          "Erreur", 
+          "Impossible de charger la liste des étudiants.",
+          snackPosition: SnackPosition.BOTTOM,
+        );
+      }
     } finally {
       isLoading.value = false;
     }
@@ -40,16 +73,21 @@ class PointageController extends GetxController {
     }
   }
   
-  // Nouvelle méthode: recherche d'un étudiant par matricule auprès du backend
+  // Recherche d'un étudiant par matricule auprès du backend
   Future<Absence?> rechercherEtudiantParMatricule(String matricule) async {
+    if (!isInitialized.value) {
+      error.value = "Le provider n'est pas encore initialisé";
+      return null;
+    }
+    
     try {
       isLoading.value = true;
       error.value = '';
       
-      // Appel à la nouvelle méthode de l'API
+      // Appel à la méthode de l'API
       final absence = await _pointageProvider.rechercherEtudiantParMatricule(matricule);
       
-      // Si l'étudiant est trouvé et n'est pas déjà dans la liste des absences, l'ajouter
+      // Si l'étudiant est trouvé et n'est pas déjà dans la liste, l'ajouter
       if (absence != null) {
         final existingIndex = absences.indexWhere((a) => a.matricule == matricule);
         if (existingIndex == -1) {
@@ -70,6 +108,15 @@ class PointageController extends GetxController {
   }
 
   Future<void> marquerPresent(String matricule) async {
+    if (!isInitialized.value) {
+      Get.snackbar(
+        "Erreur",
+        "L'application n'est pas encore complètement initialisée",
+        snackPosition: SnackPosition.BOTTOM,
+      );
+      return;
+    }
+    
     try {
       final index = absences.indexWhere((a) => a.matricule == matricule);
       if (index != -1) {
@@ -101,7 +148,11 @@ class PointageController extends GetxController {
       if (index != -1) {
         absences[index] = absences[index].copyWith(status: 'absent');
       }
-      Get.snackbar("Erreur", "Impossible de marquer l'étudiant comme présent: $e");
+      Get.snackbar(
+        "Erreur", 
+        "Impossible de marquer l'étudiant comme présent: $e",
+        snackPosition: SnackPosition.BOTTOM,
+      );
     }
   }
 }
