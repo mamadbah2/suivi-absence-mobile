@@ -1,6 +1,4 @@
 import 'package:flutter/material.dart';
-import 'package:get/get.dart';
-import '../controllers/etudiant_controller.dart';
 import './widgets/etudiant_absence_list.dart';
 
 class EtudiantPage extends StatelessWidget {

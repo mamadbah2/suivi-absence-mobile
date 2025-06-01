@@ -30,16 +30,11 @@ class PointageProvider {
     try {
       print("PointageProvider: Récupération des premiers étudiants du jour");
       
-      // Formater la date au format YYYY-MM-DD comme spécifié: 2025-05-31
-      final dateFormatted = DateFormat('yyyy-MM-dd').format(DateTime.now());
-      
-      print("Date formatée: $dateFormatted");
-      
       // Obtenir les en-têtes avec le token JWT
       final headers = await _getHeaders();
       
       // Utiliser l'endpoint correct avec le format de date spécifié
-      final uri = Uri.parse('$baseUrl/absences/mobiles/premiers?date=$dateFormatted');
+      final uri = Uri.parse('$baseUrl/absences/mobiles/premiers');
       print("URI de la requête: $uri");
       
       final response = await http.get(uri, headers: headers);
@@ -191,10 +186,10 @@ class PointageProvider {
           'nom': studentData['nom'] ?? _getNestedValue(studentData, ['etudiant', 'nom']) ?? 'unknown',
           'prenom': studentData['prenom'] ?? _getNestedValue(studentData, ['etudiant', 'prenom']) ?? 'unknown',
           'classe': studentData['classe'] ?? _getNestedValue(studentData, ['etudiant', 'classe']) ?? 'unknown',
-          'module': studentData['module'] ?? _getNestedValue(studentData, ['cours', 'module']) ?? 'unknown',
+          'module': studentData['coursNom'] ?? _getNestedValue(studentData, ['cours', 'module']) ?? 'unknown',
           'date': studentData['date'] ?? DateTime.now().toIso8601String(),
           'heure': studentData['heure'] ?? '00:00',
-          'status': studentData['status'] ?? studentData['etat'] ?? 'absent',
+          'status': studentData['statut'] ?? studentData['status'] ?? 'unknown',
         };
         
         return Absence.fromJson(absenceData);

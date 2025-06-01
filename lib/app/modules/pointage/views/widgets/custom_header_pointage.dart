@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
+import '../../../../data/controllers/auth_controller.dart';
 
 class CustomHeaderPointage extends StatelessWidget {
   final Color headerColor = const Color(0xFF4A2E20);
@@ -10,6 +11,9 @@ class CustomHeaderPointage extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    // Récupérer le contrôleur d'authentification
+    final AuthController authController = Get.find<AuthController>();
+    
     return Container(
       padding: const EdgeInsets.only(top: 40.0, left: 20.0, right: 20.0, bottom: 20.0),
       decoration: BoxDecoration(
@@ -25,19 +29,22 @@ class CustomHeaderPointage extends StatelessWidget {
           Row(
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
-              // Logo ISM (Supprimé)
-              // Padding(
-              //   padding: const EdgeInsets.only(left: 8.0),
-              //   child: Icon(Icons.calendar_today, color: accentColor, size: 30),
-              // ),
               const SizedBox(width: 40), // Espace pour équilibrer la suppression du logo
               // Infos Utilisateur & Déconnexion
               Row(
                 children: [
-                  Text(
-                    "Amadou Diaw",
-                    style: TextStyle(color: textColor, fontSize: 16),
-                  ),
+                  // Utilisation d'Obx pour observer les changements de l'utilisateur connecté
+                  Obx(() {
+                    final user = authController.currentUser.value;
+                    final displayName = user != null 
+                        ? "${user.prenom} ${user.nom}"
+                        : "Utilisateur";
+                    
+                    return Text(
+                      displayName,
+                      style: TextStyle(color: textColor, fontSize: 16),
+                    );
+                  }),
                   const SizedBox(width: 8),
                   // Ajout d'un InkWell/GestureDetector pour rendre l'icône cliquable
                   GestureDetector(
@@ -73,7 +80,7 @@ class CustomHeaderPointage extends StatelessWidget {
                 child: GestureDetector(
                   onTap: () {
                     print("Close button clicked");
-                    // Action pour fermer, par exemple Navigator.pop(context) si c\'est une modale/nouvelle page
+                    // Action pour fermer, par exemple Navigator.pop(context) si c'est une modale/nouvelle page
                   },
                   child: CircleAvatar(
                     backgroundColor: accentColor,
