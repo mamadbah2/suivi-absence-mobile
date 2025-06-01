@@ -8,7 +8,6 @@ plugins {
 android {
     namespace = "com.example.suivi_absence_mobile"
     compileSdk = flutter.compileSdkVersion
-    ndkVersion = flutter.ndkVersion
 
     compileOptions {
         sourceCompatibility = JavaVersion.VERSION_11
@@ -35,6 +34,13 @@ android {
             // TODO: Add your own signing config for the release build.
             // Signing with the debug keys for now, so `flutter run --release` works.
             signingConfig = signingConfigs.getByName("debug")
+        }
+    }
+
+    // Configuration pour désactiver la vérification stricte du NDK
+    packagingOptions {
+        jniLibs {
+            useLegacyPackaging = true
         }
     }
 }
