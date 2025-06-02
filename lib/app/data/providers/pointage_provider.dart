@@ -12,7 +12,7 @@ class PointageProvider {
   late final String baseUrl;
   
   // Variable pour activer/désactiver la simulation
-  final bool _useSimulation = true;
+  final bool _useSimulation = false;
   
   PointageProvider() {
     try {
@@ -42,7 +42,7 @@ class PointageProvider {
   }
 
   // Récupère les premiers étudiants du jour
-  Future<List<Absence>> getListeAbsencesPourCours(String idCours) async {
+  Future<List<Absence>> getListeAbsencesPourCours() async {
     try {
       print("PointageProvider: Récupération des premiers étudiants du jour");
       
@@ -132,7 +132,7 @@ class PointageProvider {
               'nom': safeData['nom'] ?? _getNestedValue(safeData, ['etudiant', 'nom']) ?? 'unknown',
               'prenom': safeData['prenom'] ?? _getNestedValue(safeData, ['etudiant', 'prenom']) ?? 'unknown',
               'classe': safeData['classe'] ?? _getNestedValue(safeData, ['etudiant', 'classe']) ?? 'unknown',
-              'module': safeData['module'] ?? _getNestedValue(safeData, ['cours', 'module']) ?? idCours,
+              'module': safeData['module'] ?? _getNestedValue(safeData, ['cours', 'module']),
               'date': safeData['date'] ?? DateTime.now().toIso8601String(),
               'heure': safeData['heure'] ?? '00:00',
               'status': safeData['status'] ?? safeData['etat'] ?? 'absent',

@@ -1,12 +1,14 @@
 import 'package:get/get.dart';
 import '../../../data/models/absence.dart';
 import '../../../data/controllers/auth_controller.dart';
+import '../../../data/providers/etudiant_provider.dart';
 
 class EtudiantController extends GetxController {
   final RxList<Absence> mesAbsences = <Absence>[].obs;
   final RxBool isLoading = false.obs;
   final RxString error = ''.obs;
   final AuthController _authController = Get.find<AuthController>();
+  final EtudiantProvider _etudiantProvider = Get.find<EtudiantProvider>();
 
   // Stats des absences
   final RxInt absenceCumulee = 31.obs; // en heures
@@ -23,8 +25,8 @@ class EtudiantController extends GetxController {
   @override
   void onInit() {
     super.onInit();
-    chargerAbsences();
     initialiserInfosEtudiant();
+    chargerAbsences();
   }
 
   void initialiserInfosEtudiant() {
@@ -41,86 +43,25 @@ class EtudiantController extends GetxController {
     }
   }
   
-  void chargerAbsences() {
+  // Modification du type de retour de void à Future<void>
+  Future<void> chargerAbsences() async {
     try {
       isLoading.value = true;
       error.value = '';
       
-      // Données simulées pour les absences
-      final today = DateTime.now();
+      // Récupérer les absences depuis l'API
+      final absences = await _etudiantProvider.getAbsencesEtudiant(matricule.value);
       
-      mesAbsences.assignAll([
-        // Absences pour aujourd'hui
-        Absence(
-          id: '1',
-          matricule: matricule.value,
+      // Compléter les informations manquantes dans les absences
+      final List<Absence> absencesCompletes = absences.map((absence) => 
+        absence.copyWith(
           nom: nom.value,
           prenom: prenom.value,
-          classe: classe.value,
-          module: 'Développement Flutter',
-          date: today,
-          heure: '8h',
-          status: 'absent',
-          duree: '8h-12h',
-          type: 'Retard',
-        ),
-        Absence(
-          id: '2',
-          matricule: matricule.value,
-          nom: nom.value,
-          prenom: prenom.value,
-          classe: classe.value,
-          module: 'Gestion de Projet',
-          date: today,
-          heure: '8h',
-          status: 'absent',
-          duree: '8h-12h',
-          type: 'Absence',
-        ),
-        Absence(
-          id: '3',
-          matricule: matricule.value,
-          nom: nom.value,
-          prenom: prenom.value,
-          classe: classe.value,
-          module: 'Base de données',
-          date: today,
-          heure: '14h',
-          status: 'present',
-          duree: '14h-18h',
-          type: 'Absence',
-          justification: 'Justifiée',
-        ),
-        
-        // Absences plus anciennes
-        Absence(
-          id: '4',
-          matricule: matricule.value,
-          nom: nom.value,
-          prenom: prenom.value,
-          classe: classe.value,
-          module: 'Java',
-          date: today.subtract(const Duration(days: 2)),
-          heure: '10h',
-          status: 'absent',
-          duree: '10h-12h',
-          type: 'Absence',
-        ),
-        Absence(
-          id: '5',
-          matricule: matricule.value,
-          nom: nom.value,
-          prenom: prenom.value,
-          classe: classe.value,
-          module: 'Analyse des Besoins',
-          date: today.subtract(const Duration(days: 4)),
-          heure: '14h',
-          status: 'present',
-          duree: '14h-16h',
-          type: 'Retard',
-          justification: 'Justifiée',
-        ),
-      ]);
+          classe: classe.value
+        )
+      ).toList();
+      
+      mesAbsences.assignAll(absencesCompletes);
       
     } catch (e) {
       error.value = "Erreur lors du chargement des absences: $e";
@@ -132,30 +73,21 @@ class EtudiantController extends GetxController {
   // Méthodes pour la justification des absences
   Future<bool> envoyerJustification(String absenceId, String motif, String commentaire) async {
     try {
-      // Simuler un appel API pour envoyer la justification
-      await Future.delayed(const Duration(milliseconds: 800));
+      // Appeler l'API pour envoyer la justification
+      final success = await _etudiantProvider.soumettreJustification(absenceId, motif, commentaire);
       
-      // Trouver et mettre à jour l'absence dans la liste
-      final index = mesAbsences.indexWhere((absence) => absence.id == absenceId);
-      if (index != -1) {
-        final absence = mesAbsences[index];
-        final updatedAbsence = Absence(
-          id: absence.id,
-          matricule: absence.matricule,
-          nom: absence.nom,
-          prenom: absence.prenom,
-          classe: absence.classe,
-          module: absence.module,
-          date: absence.date,
-          heure: absence.heure,
-          status: absence.status,
-          duree: absence.duree,
-          type: absence.type,
-          justification: 'En attente',
-        );
-        
-        mesAbsences[index] = updatedAbsence;
-        return true;
+      if (success) {
+        // Trouver et mettre à jour l'absence dans la liste locale
+        final index = mesAbsences.indexWhere((absence) => absence.id == absenceId);
+        if (index != -1) {
+          final absence = mesAbsences[index];
+          final updatedAbsence = absence.copyWith(
+            justification: 'En attente',
+          );
+          
+          mesAbsences[index] = updatedAbsence;
+          return true;
+        }
       }
       return false;
     } catch (e) {
@@ -172,5 +104,10 @@ class EtudiantController extends GetxController {
       absence.date.month == today.month && 
       absence.date.day == today.day
     ).toList();
+  }
+  
+  // Rafraîchir les données - maintenant le await fonctionne correctement
+  Future<void> refreshAbsences() async {
+    await chargerAbsences();
   }
 }

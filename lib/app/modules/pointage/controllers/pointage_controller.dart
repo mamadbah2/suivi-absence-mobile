@@ -47,7 +47,7 @@ class PointageController extends GetxController {
     try {
       isLoading.value = true;
       error.value = '';
-      final result = await _pointageProvider.getListeAbsencesPourCours(_idCoursActuel);
+      final result = await _pointageProvider.getListeAbsencesPourCours();
       absences.assignAll(result);
     } catch (e) {
       error.value = "Erreur lors de la récupération de la liste des étudiants: $e";

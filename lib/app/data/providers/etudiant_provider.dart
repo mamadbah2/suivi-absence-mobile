@@ -13,7 +13,7 @@ class EtudiantProvider extends GetxController {
   late final String baseUrl;
   
   // Variable pour activer/désactiver la simulation
-  final bool _useSimulation = true;
+  final bool _useSimulation = false; // Désactivé pour utiliser les données réelles
   
   EtudiantProvider() {
     baseUrl = _authProvider.apiBaseUrl;
@@ -288,6 +288,93 @@ class EtudiantProvider extends GetxController {
     } catch (e) {
       print("Exception lors de la soumission de justification: $e");
       return false;
+    }
+  }
+  
+  // Récupère les absences d'un étudiant par son matricule
+  Future<List<Absence>> getAbsencesEtudiant(String matricule) async {
+    try {
+      print("EtudiantProvider: Récupération des absences de l'étudiant $matricule");
+      
+      if (_useSimulation) {
+        print("Mode simulation activé: retourne des absences simulées");
+        return _getSimulatedAbsencesDuJour();
+      }
+      
+      // Obtenir les en-têtes avec le token JWT
+      final headers = await _getHeaders();
+      
+      final response = await http.get(
+        Uri.parse('$baseUrl/absences/etudiants/$matricule'),
+        headers: headers,
+      ).timeout(
+        const Duration(seconds: 10),
+        onTimeout: () {
+          print("Timeout lors de la requête API");
+          return http.Response('{"error": "Timeout"}', 408);
+        }
+      );
+      
+      if (response.statusCode != 200) {
+        print("Erreur API: ${response.statusCode}");
+        print("Détails: ${response.body}");
+        return _getSimulatedAbsencesDuJour();
+      }
+      
+      print("Réponse API: ${response.body}");
+      
+      try {
+        if (response.body.isEmpty) {
+          return [];
+        }
+        
+        final decodedBody = jsonDecode(response.body);
+        
+        if (decodedBody is! List) {
+          throw FormatException("Format de réponse non reconnu, attendu: liste");
+        }
+        
+        return decodedBody.map((item) {
+          try {
+            // Extraire les données du cours
+            final cours = item['cours'] ?? {};
+            final module = cours['module'] ?? {};
+            
+            return Absence(
+              id: item['id']?.toString() ?? '',
+              matricule: matricule,
+              nom: '', // Ces valeurs seront complétées ailleurs
+              prenom: '', // Ces valeurs seront complétées ailleurs
+              classe: '', // Ces valeurs seront complétées ailleurs
+              module: module['nom'] ?? 'Inconnu',
+              date: item['date'] != null 
+                  ? DateTime.parse(item['date']) 
+                  : DateTime.now(),
+              heure: item['heure']?.toString()?.substring(0, 5) ?? '00:00',
+              status: item['status']?.toString()?.toLowerCase() ?? 'absent',
+              justification: item['justification'],
+              duree: cours['heureDebut'] != null && cours['heureFin'] != null
+                  ? '${cours['heureDebut']}-${cours['heureFin']}' 
+                  : null,
+              type: item['status'] == 'RETARD' ? 'Retard' : 'Absence',
+              professeur: module['nomProf'],
+              salle: cours['salle'] ?? 'Non spécifiée',
+            );
+          } catch (e) {
+            print("Erreur lors de la conversion d'une absence: $e");
+            return null;
+          }
+        })
+        .where((absence) => absence != null)
+        .cast<Absence>()
+        .toList();
+      } catch (e) {
+        print("Erreur lors du décodage/conversion des données: $e");
+        return _getSimulatedAbsencesDuJour();
+      }
+    } catch (e) {
+      print("Exception lors de la récupération des absences de l'étudiant: $e");
+      return _getSimulatedAbsencesDuJour();
     }
   }
   
