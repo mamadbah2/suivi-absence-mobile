@@ -66,7 +66,7 @@ class EtudiantAbsenceList extends StatelessWidget {
             children: [
               _buildStudentProfileWithQR(context, isSmallScreen, controller),
 
-              // Statistiques
+              // Code QR pour remplacer les statistiques
               Container(
                 padding: const EdgeInsets.all(16.0),
                 decoration: BoxDecoration(
@@ -81,53 +81,42 @@ class EtudiantAbsenceList extends StatelessWidget {
                   ],
                   border: Border.all(color: ismBrown.withOpacity(0.2)),
                 ),
-                child: Row(
-                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                child: Column(
                   children: [
-                    Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: const [
-                        Text('Absence cumulée',
-                            style: TextStyle(
-                                fontWeight: FontWeight.w600, color: ismBrown)),
-                        SizedBox(height: 8),
-                        Text('Absence soumise',
-                            style: TextStyle(
-                                fontWeight: FontWeight.w600, color: ismBrown)),
-                        SizedBox(height: 8),
-                        Text('Retards cumulés',
-                            style: TextStyle(
-                                fontWeight: FontWeight.w600, color: ismBrown)),
-                        SizedBox(height: 8),
-                        Text('Absence restante',
-                            style: TextStyle(
-                                fontWeight: FontWeight.w600, color: ismBrown)),
-                      ],
+                    // Titre
+                    const Text(
+                      "Mon Code QR",
+                      style: TextStyle(
+                        fontSize: 18,
+                        fontWeight: FontWeight.bold,
+                        color: ismBrownDark,
+                      ),
                     ),
-                    Column(
-                      crossAxisAlignment: CrossAxisAlignment.end,
-                      children: [
-                        Text('${controller.absenceCumulee}h',
-                            style: const TextStyle(
-                                color: ismOrange,
-                                fontWeight: FontWeight.bold)),
-                        const SizedBox(height: 8),
-                        Text('${controller.absenceSoumise}h',
-                            style: const TextStyle(
-                                color: ismOrange,
-                                fontWeight: FontWeight.bold)),
-                        const SizedBox(height: 8),
-                        Text('${controller.retardsCumules}h',
-                            style: const TextStyle(
-                                color: ismOrange,
-                                fontWeight: FontWeight.bold)),
-                        const SizedBox(height: 8),
-                        Text('${controller.absenceRestante}h',
-                            style: const TextStyle(
-                                color: ismBrownDark,
-                                fontWeight: FontWeight.bold)),
-                      ],
+                    const SizedBox(height: 16),
+                    // Code QR plus petit et centré
+                    Center(
+                      child: SizedBox(
+                        width: 180.0, // Taille réduite (avant 200.0)
+                        height: 180.0, // Taille réduite (avant 200.0)
+                        child: Obx(() => QrImageView(
+                          data: controller.matricule.value,
+                          version: QrVersions.auto,
+                          size: 180.0, // Taille réduite (avant 200.0)
+                          gapless: true,
+                          foregroundColor: ismBrownDark,
+                        )),
+                      ),
                     ),
+                    const SizedBox(height: 12),
+                    // Matricule
+                    Obx(() => Text(
+                      'Matricule: ${controller.matricule.value}',
+                      style: const TextStyle(
+                        fontSize: 14,
+                        color: ismBrown,
+                        fontWeight: FontWeight.w600,
+                      ),
+                    )),
                   ],
                 ),
               ),
@@ -324,7 +313,7 @@ class EtudiantAbsenceList extends StatelessWidget {
                       Obx(() => QrImageView(
                         data: controller.matricule.value,
                         version: QrVersions.auto,
-                        size: 180.0,
+                        size: 170.0, // Taille réduite pour être cohérent avec l'écran principal
                         gapless: true,
                         foregroundColor: ismBrownDark,
                       )),
@@ -498,14 +487,17 @@ class EtudiantAbsenceList extends StatelessWidget {
                         color: ismBrown,
                         fontSize: isSmallScreen ? 12 : 14)),
                 const SizedBox(width: 8),
-                IconButton(
-                  icon: const Icon(Icons.more_vert, color: ismBrown),
-                  onPressed: () {
-                    _showJustificationDialog(context, course, absenceId);
-                  },
-                  padding: EdgeInsets.zero,
-                  constraints: const BoxConstraints(),
-                ),
+                
+                // N'afficher le bouton d'options que pour les absences
+                if (!isRetard)
+                  IconButton(
+                    icon: const Icon(Icons.more_vert, color: ismBrown),
+                    onPressed: () {
+                      _showJustificationDialog(context, course, absenceId);
+                    },
+                    padding: EdgeInsets.zero,
+                    constraints: const BoxConstraints(),
+                  ),
               ],
             ),
           ],
@@ -568,6 +560,7 @@ class EtudiantAbsenceList extends StatelessWidget {
               const SizedBox(height: 24),
               Row(
                 children: [
+                  // Si c'est un retard, prendre toute la largeur avec le bouton Fermer
                   Expanded(
                     child: OutlinedButton(
                       onPressed: () => Navigator.pop(context),
@@ -582,24 +575,28 @@ class EtudiantAbsenceList extends StatelessWidget {
                           style: TextStyle(color: ismOrange)),
                     ),
                   ),
-                  const SizedBox(width: 16),
-                  Expanded(
-                    child: ElevatedButton(
-                      onPressed: () {
-                        Navigator.pop(context);
-                        _showJustificationDialog(context, course, absenceId);
-                      },
-                      style: ElevatedButton.styleFrom(
-                        backgroundColor: ismOrange,
-                        padding: const EdgeInsets.symmetric(vertical: 16),
-                        shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(12),
+                  
+                  // Afficher le bouton Justifier uniquement si ce n'est pas un retard
+                  if (!isRetard) ...[
+                    const SizedBox(width: 16),
+                    Expanded(
+                      child: ElevatedButton(
+                        onPressed: () {
+                          Navigator.pop(context);
+                          _showJustificationDialog(context, course, absenceId);
+                        },
+                        style: ElevatedButton.styleFrom(
+                          backgroundColor: ismOrange,
+                          padding: const EdgeInsets.symmetric(vertical: 16),
+                          shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(12),
+                          ),
                         ),
+                        child: const Text('Justifier',
+                            style: TextStyle(color: Colors.white)),
                       ),
-                      child: const Text('Justifier',
-                          style: TextStyle(color: Colors.white)),
                     ),
-                  ),
+                  ],
                 ],
               ),
             ],
