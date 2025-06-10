@@ -3,6 +3,8 @@ import 'package:get/get.dart';
 import 'package:qr_flutter/qr_flutter.dart';
 import '../../controllers/etudiant_controller.dart';
 import '../../../../data/models/absence.dart';
+import '../../../../data/controllers/auth_controller.dart';
+import '../../../../routes/app_pages.dart';
 
 // Définition des couleurs ISM avec des nuances améliorées
 const Color ismBrownDark = Color(0xFF43291b);
@@ -35,6 +37,15 @@ class EtudiantAbsenceList extends StatelessWidget {
         ),
         centerTitle: true,
         actions: [
+          // Bouton de déconnexion
+          IconButton(
+            icon: const Icon(Icons.logout, color: Colors.white),
+            tooltip: 'Déconnexion',
+            onPressed: () {
+              _showLogoutConfirmDialog(context);
+            },
+          ),
+          // Informations de l'étudiant
           Obx(() => Padding(
             padding: const EdgeInsets.only(right: 16.0),
             child: Column(
@@ -728,6 +739,53 @@ class EtudiantAbsenceList extends StatelessWidget {
                 );
               },
               child: const Text('Envoyer',
+                  style: TextStyle(color: Colors.white)),
+            ),
+          ],
+        );
+      },
+    );
+  }
+
+  void _showLogoutConfirmDialog(BuildContext context) {
+    showDialog(
+      context: context,
+      builder: (BuildContext context) {
+        return AlertDialog(
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(16),
+          ),
+          title: const Text('Déconnexion',
+              style: TextStyle(color: ismBrownDark)),
+          content: const Text('Êtes-vous sûr de vouloir vous déconnecter ?',
+              style: TextStyle(color: ismBrown)),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.of(context).pop(),
+              child: const Text('Annuler',
+                  style: TextStyle(color: ismBrown)),
+            ),
+            ElevatedButton(
+              style: ElevatedButton.styleFrom(
+                backgroundColor: ismOrange,
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(12),
+                ),
+              ),
+              onPressed: () {
+                // Récupération du contrôleur d'authentification
+                final AuthController authController = Get.find<AuthController>();
+                
+                // Déconnexion de l'utilisateur
+                authController.clearUser();
+                
+                // Fermer la boîte de dialogue
+                Navigator.of(context).pop();
+                
+                // Retour à la page de connexion
+                Get.offAllNamed(Routes.LOGIN);
+              },
+              child: const Text('Oui, déconnecter',
                   style: TextStyle(color: Colors.white)),
             ),
           ],
