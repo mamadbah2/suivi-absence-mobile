@@ -5,6 +5,7 @@ import '../../controllers/etudiant_controller.dart';
 import '../../../../data/models/absence.dart';
 import '../../../../data/controllers/auth_controller.dart';
 import '../../../../routes/app_pages.dart';
+import './all_absences_page.dart';
 
 // Définition des couleurs ISM avec des nuances améliorées
 const Color ismBrownDark = Color(0xFF43291b);
@@ -152,7 +153,13 @@ class EtudiantAbsenceList extends StatelessWidget {
                     ),
                     const Spacer(),
                     TextButton(
-                      onPressed: () {},
+                      onPressed: () {
+                        Navigator.of(context).push(
+                          MaterialPageRoute(
+                            builder: (context) => const AllAbsencesPage(),
+                          ),
+                        );
+                      },
                       child: Row(
                         children: const [
                           Text('Voir tout', style: TextStyle(color: ismOrange)),
