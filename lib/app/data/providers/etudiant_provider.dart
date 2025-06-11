@@ -6,6 +6,7 @@ import '../models/absence.dart';
 import '../models/etudiant_model.dart';
 import '../models/absence_stats.dart';
 import '../providers/auth_provider.dart';
+import 'dart:io';
 
 class EtudiantProvider extends GetxController {
   final AuthProvider _authProvider = Get.find<AuthProvider>();
@@ -288,6 +289,78 @@ class EtudiantProvider extends GetxController {
       return true;
     } catch (e) {
       print("Exception lors de la soumission de justification: $e");
+      return false;
+    }
+  }
+  
+  // Soumet une justification pour une absence avec images jointes
+  Future<bool> soumettreJustificationAvecImages(
+      String absenceId, String motif, String commentaire, List<File> images) async {
+    try {
+      print("EtudiantProvider: Soumission de justification avec images pour l'absence $absenceId");
+      print("Nombre d'images à envoyer: ${images.length}");
+      
+      if (_useSimulation) {
+        print("Mode simulation activé: simulation de la soumission de justification avec ${images.length} images");
+        // Pause pour simuler le temps de traitement
+        await Future.delayed(const Duration(seconds: 1));
+        return true;
+      }
+
+      // Utiliser http.MultipartRequest pour envoyer les fichiers
+      final request = http.MultipartRequest(
+        'POST',
+        Uri.parse('$baseUrl/absences/justifier-avec-images'),
+      );
+      
+      // Obtenir les en-têtes avec le token JWT
+      final headers = await _getHeaders();
+      request.headers.addAll(headers);
+      
+      // Ajouter les champs textuels
+      request.fields['absenceId'] = absenceId;
+      request.fields['motif'] = motif;
+      request.fields['commentaire'] = commentaire;
+      
+      // Ajouter chaque image comme fichier multipart
+      for (int i = 0; i < images.length; i++) {
+        final file = images[i];
+        final filename = 'justificatif_${i + 1}_${DateTime.now().millisecondsSinceEpoch}.jpg';
+        final fileStream = http.ByteStream(file.openRead());
+        final fileLength = await file.length();
+        
+        final multipartFile = http.MultipartFile(
+          'images', // Nom du champ pour le fichier (doit correspondre à ce que le backend attend)
+          fileStream,
+          fileLength,
+          filename: filename,
+        );
+        
+        request.files.add(multipartFile);
+      }
+      
+      // Envoyer la requête
+      final streamedResponse = await request.send().timeout(
+        const Duration(seconds: 30),
+        onTimeout: () {
+          print("Timeout lors de l'envoi des images");
+          throw Exception("Timeout lors de l'envoi des images");
+        }
+      );
+      
+      // Convertir la réponse en http.Response pour traitement
+      final response = await http.Response.fromStream(streamedResponse);
+      
+      if (response.statusCode != 200 && response.statusCode != 201) {
+        print("Erreur API: ${response.statusCode}");
+        print("Détails: ${response.body}");
+        return false;
+      }
+      
+      print("Images envoyées avec succès");
+      return true;
+    } catch (e) {
+      print("Exception lors de la soumission de justification avec images: $e");
       return false;
     }
   }

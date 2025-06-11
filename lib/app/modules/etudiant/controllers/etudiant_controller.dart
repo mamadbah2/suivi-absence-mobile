@@ -1,4 +1,6 @@
 import 'package:get/get.dart';
+import 'dart:io';
+import 'package:image_picker/image_picker.dart';
 import '../../../data/models/absence.dart';
 import '../../../data/controllers/auth_controller.dart';
 import '../../../data/providers/etudiant_provider.dart';
@@ -9,6 +11,8 @@ class EtudiantController extends GetxController {
   final RxString error = ''.obs;
   final AuthController _authController = Get.find<AuthController>();
   final EtudiantProvider _etudiantProvider = Get.find<EtudiantProvider>();
+  final ImagePicker _picker = ImagePicker();
+  final RxList<File> selectedImages = <File>[].obs;
 
   // Stats des absences
   final RxInt absenceCumulee = 31.obs; // en heures
@@ -70,11 +74,73 @@ class EtudiantController extends GetxController {
     }
   }
 
-  // Méthodes pour la justification des absences
-  Future<bool> envoyerJustification(String absenceId, String motif, String commentaire) async {
+  // Méthode pour sélectionner des images depuis la galerie
+  Future<void> pickImages() async {
     try {
-      // Appeler l'API pour envoyer la justification
-      final success = await _etudiantProvider.soumettreJustification(absenceId, motif, commentaire);
+      final List<XFile>? images = await _picker.pickMultiImage(
+        imageQuality: 70, // Réduire la qualité pour optimiser la taille
+        maxWidth: 1000,
+      );
+      
+      if (images != null && images.isNotEmpty) {
+        // Ajouter les nouvelles images sélectionnées à la liste
+        for (var image in images) {
+          selectedImages.add(File(image.path));
+        }
+      }
+    } catch (e) {
+      print('Erreur lors de la sélection d\'images: $e');
+    }
+  }
+
+  // Méthode pour prendre une photo avec la caméra
+  Future<void> takePhoto() async {
+    try {
+      final XFile? photo = await _picker.pickImage(
+        source: ImageSource.camera,
+        imageQuality: 70,
+        maxWidth: 1000,
+      );
+      
+      if (photo != null) {
+        selectedImages.add(File(photo.path));
+      }
+    } catch (e) {
+      print('Erreur lors de la prise de photo: $e');
+    }
+  }
+
+  // Supprimer une image de la liste des images sélectionnées
+  void removeImage(int index) {
+    if (index >= 0 && index < selectedImages.length) {
+      selectedImages.removeAt(index);
+    }
+  }
+
+  // Vider la liste des images sélectionnées
+  void clearSelectedImages() {
+    selectedImages.clear();
+  }
+
+  // Méthodes pour la justification des absences
+  Future<bool> envoyerJustification(
+      String absenceId, String motif, String commentaire, [List<File>? images]) async {
+    try {
+      // Utiliser les images passées en paramètre ou les images sélectionnées
+      final imagesToSend = images ?? selectedImages;
+      
+      // Afficher des informations de débogage
+      print('Envoi de justification pour absence ID: $absenceId');
+      print('Motif: $motif');
+      print('Nombre d\'images jointes: ${imagesToSend.length}');
+      
+      // Appeler l'API pour envoyer la justification avec les images
+      final success = await _etudiantProvider.soumettreJustificationAvecImages(
+        absenceId, 
+        motif, 
+        commentaire,
+        imagesToSend
+      );
       
       if (success) {
         // Trouver et mettre à jour l'absence dans la liste locale
@@ -83,9 +149,14 @@ class EtudiantController extends GetxController {
           final absence = mesAbsences[index];
           final updatedAbsence = absence.copyWith(
             justification: 'En attente',
+            // Ajouter le nombre d'images jointes dans le statut pour information
+            status: imagesToSend.isNotEmpty ? 'En attente (${imagesToSend.length} justificatifs)' : 'En attente'
           );
           
           mesAbsences[index] = updatedAbsence;
+          
+          // Vider la liste des images après l'envoi réussi
+          clearSelectedImages();
           return true;
         }
       }

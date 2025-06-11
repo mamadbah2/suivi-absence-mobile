@@ -37,6 +37,7 @@ dependencies:
   intl: ^0.19.0 # Ajout du package intl pour le formatage des dates
   flutter_secure_storage: ^9.0.0  # Ajout de la dépendance pour stocker le JWT de manière sécurisée
   http: ^1.4.0  # Package pour les requêtes HTTP sans problèmes CORS
+  image_picker: ^1.0.7  # Pour sélectionner des images depuis la galerie ou la caméra
 
   # The following adds the Cupertino Icons font to your application.
   # Use with the CupertinoIcons class for iOS style icons.
