@@ -1,6 +1,7 @@
 import 'package:get/get.dart';
 import 'package:http/http.dart' as http;
 import 'dart:convert';
+import 'dart:math';
 import '../models/absence.dart';
 import '../models/etudiant_model.dart';
 import '../models/absence_stats.dart';
@@ -305,7 +306,7 @@ class EtudiantProvider extends GetxController {
       final headers = await _getHeaders();
       
       final response = await http.get(
-        Uri.parse('$baseUrl/absences/etudiants/$matricule'),
+        Uri.parse('$baseUrl/absences/mobiles/etudiant/$matricule'),
         headers: headers,
       ).timeout(
         const Duration(seconds: 10),
@@ -330,44 +331,92 @@ class EtudiantProvider extends GetxController {
         
         final decodedBody = jsonDecode(response.body);
         
-        if (decodedBody is! List) {
-          throw FormatException("Format de réponse non reconnu, attendu: liste");
+        // Nouveau format de réponse: objet contenant les infos de l'étudiant et un tableau 'absences'
+        if (decodedBody is Map) {
+          // Si le format est celui d'un objet contenant un tableau 'absences'
+          if (decodedBody.containsKey('absences')) {
+            final absencesList = decodedBody['absences'] as List<dynamic>;
+            final etudiantMatricule = decodedBody['matricule'] as String? ?? matricule;
+            final etudiantNom = decodedBody['nom'] as String? ?? '';
+            final etudiantPrenom = decodedBody['prenom'] as String? ?? '';
+            final etudiantClasse = decodedBody['classe'] as String? ?? '';
+            
+            return absencesList.map((item) {
+              try {
+                // Conversion au format Absence
+                return Absence(
+                  id: '${etudiantMatricule}_${item['module']}_${item['date']}',
+                  matricule: etudiantMatricule,
+                  nom: etudiantNom,
+                  prenom: etudiantPrenom,
+                  classe: etudiantClasse,
+                  module: item['module'] ?? 'Inconnu',
+                  date: item['date'] != null 
+                      ? DateTime.parse(item['date']) 
+                      : DateTime.now(),
+                  heure: item['heurePointage'] != null 
+                      ? item['heurePointage'].toString().substring(0, min(5, item['heurePointage'].toString().length))
+                      : '00:00',
+                  status: item['status']?.toString()?.toLowerCase() ?? 'absent',
+                  justification: item['justification'],
+                  duree: item['heureDebut'] != null && item['heureFin'] != null
+                      ? '${item['heureDebut'].trim()}-${item['heureFin'].trim()}' 
+                      : null,
+                  type: item['status'] == 'RETARD' ? 'Retard' : 'Absence',
+                  professeur: item['professeur'],
+                  salle: 'Salle de cours',
+                );
+              } catch (e) {
+                print("Erreur lors de la conversion d'une absence: $e");
+                return null;
+              }
+            })
+            .where((absence) => absence != null)
+            .cast<Absence>()
+            .toList();
+          }
         }
         
-        return decodedBody.map((item) {
-          try {
-            // Extraire les données du cours
-            final cours = item['cours'] ?? {};
-            final module = cours['module'] ?? {};
-            
-            return Absence(
-              id: item['id']?.toString() ?? '',
-              matricule: matricule,
-              nom: '', // Ces valeurs seront complétées ailleurs
-              prenom: '', // Ces valeurs seront complétées ailleurs
-              classe: '', // Ces valeurs seront complétées ailleurs
-              module: module['nom'] ?? 'Inconnu',
-              date: item['date'] != null 
-                  ? DateTime.parse(item['date']) 
-                  : DateTime.now(),
-              heure: item['heure']?.toString()?.substring(0, 5) ?? '00:00',
-              status: item['status']?.toString()?.toLowerCase() ?? 'absent',
-              justification: item['justification'],
-              duree: cours['heureDebut'] != null && cours['heureFin'] != null
-                  ? '${cours['heureDebut']}-${cours['heureFin']}' 
-                  : null,
-              type: item['status'] == 'RETARD' ? 'Retard' : 'Absence',
-              professeur: module['nomProf'],
-              salle: cours['salle'] ?? 'Non spécifiée',
-            );
-          } catch (e) {
-            print("Erreur lors de la conversion d'une absence: $e");
-            return null;
-          }
-        })
-        .where((absence) => absence != null)
-        .cast<Absence>()
-        .toList();
+        // Format alternatif: directement une liste d'absences (ancien format)
+        if (decodedBody is List) {
+          return decodedBody.map((item) {
+            try {
+              // Extraire les données du cours (ancien format)
+              final cours = item['cours'] ?? {};
+              final module = cours['module'] ?? {};
+              
+              return Absence(
+                id: item['id']?.toString() ?? '',
+                matricule: matricule,
+                nom: '', // Ces valeurs seront complétées ailleurs
+                prenom: '', // Ces valeurs seront complétées ailleurs
+                classe: '', // Ces valeurs seront complétées ailleurs
+                module: module['nom'] ?? 'Inconnu',
+                date: item['date'] != null 
+                    ? DateTime.parse(item['date']) 
+                    : DateTime.now(),
+                heure: item['heure']?.toString()?.substring(0, 5) ?? '00:00',
+                status: item['status']?.toString()?.toLowerCase() ?? 'absent',
+                justification: item['justification'],
+                duree: cours['heureDebut'] != null && cours['heureFin'] != null
+                    ? '${cours['heureDebut']}-${cours['heureFin']}' 
+                    : null,
+                type: item['status'] == 'RETARD' ? 'Retard' : 'Absence',
+                professeur: module['nomProf'],
+                salle: cours['salle'] ?? 'Non spécifiée',
+              );
+            } catch (e) {
+              print("Erreur lors de la conversion d'une absence: $e");
+              return null;
+            }
+          })
+          .where((absence) => absence != null)
+          .cast<Absence>()
+          .toList();
+        }
+        
+        // Si on arrive ici, le format n'est pas reconnu
+        throw FormatException("Format de réponse non reconnu, ni liste ni objet avec 'absences'");
       } catch (e) {
         print("Erreur lors du décodage/conversion des données: $e");
         return _getSimulatedAbsencesDuJour();
