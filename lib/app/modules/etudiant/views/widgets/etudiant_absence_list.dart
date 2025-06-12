@@ -1,5 +1,9 @@
+import 'dart:io';
+import 'package:flutter/foundation.dart' show kIsWeb;
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
+import 'package:intl/intl.dart';
+import 'package:image_picker/image_picker.dart';
 import 'package:qr_flutter/qr_flutter.dart';
 import '../../controllers/etudiant_controller.dart';
 import '../../../../data/models/absence.dart';
@@ -214,8 +218,8 @@ class EtudiantAbsenceList extends StatelessWidget {
                         offset: const Offset(0, 4),
                       ),
                     ],
-                    image: const DecorationImage(
-                      image: AssetImage('assets/images/Et1.jpg'),
+                    image: DecorationImage(
+                      image: _getImageProvider('assets/images/Et1.jpg'),
                       fit: BoxFit.cover,
                     ),
                   ),
@@ -257,677 +261,47 @@ class EtudiantAbsenceList extends StatelessWidget {
   }
 
   void _showFullSizeProfile(BuildContext context, EtudiantController controller) {
+    final size = MediaQuery.of(context).size;
+    final isSmallScreen = size.width < 600;
+    
     showDialog(
       context: context,
-      builder: (BuildContext context) {
-        return Dialog(
-          backgroundColor: Colors.transparent,
-          insetPadding: const EdgeInsets.all(20),
-          child: Container(
-            padding: const EdgeInsets.all(20),
-            decoration: BoxDecoration(
-              color: Colors.white,
-              borderRadius: BorderRadius.circular(20),
-              boxShadow: [
-                BoxShadow(
-                  color: Colors.black.withOpacity(0.2),
-                  blurRadius: 20,
-                  spreadRadius: 2,
-                ),
-              ],
-            ),
-            child: Column(
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                // Photo de profil
-                Container(
-                  width: 200,
-                  height: 200,
+      builder: (context) => Padding(
+        padding: const EdgeInsets.all(16.0),
+        child: Material(
+          color: Colors.transparent,
+          child: Stack(
+            children: [
+              Align(
+                alignment: Alignment.center,
+                child: Container(
+                  constraints: BoxConstraints(
+                    maxWidth: isSmallScreen ? size.width * 0.9 : 500,
+                    maxHeight: isSmallScreen ? size.height * 0.7 : 600,
+                  ),
                   decoration: BoxDecoration(
-                    borderRadius: BorderRadius.circular(100),
-                    border: Border.all(color: ismOrange, width: 3),
+                    borderRadius: BorderRadius.circular(20),
                     boxShadow: [
                       BoxShadow(
-                        color: ismBrown.withOpacity(0.2),
-                        blurRadius: 8,
-                        offset: const Offset(0, 4),
+                        color: Colors.black.withOpacity(0.3),
+                        blurRadius: 15,
+                        spreadRadius: 5,
                       ),
                     ],
-                    image: const DecorationImage(
-                      image: AssetImage('assets/images/Et1.jpg'),
+                  ),
+                  child: ClipRRect(
+                    borderRadius: BorderRadius.circular(20),
+                    child: Image(
+                      image: _getImageProvider('assets/images/Et1.jpg'),
                       fit: BoxFit.cover,
                     ),
                   ),
                 ),
-                const SizedBox(height: 20),
-                // Informations étudiant
-                Obx(() => Text(
-                  '${controller.prenom.value} ${controller.nom.value}',
-                  style: const TextStyle(
-                    fontSize: 22,
-                    fontWeight: FontWeight.bold,
-                    color: ismBrownDark,
-                  ),
-                )),
-                const SizedBox(height: 4),
-                Obx(() => Text(
-                  '${controller.classe.value} - ${controller.matricule.value}',
-                  style: const TextStyle(
-                    fontSize: 16,
-                    color: ismBrown,
-                  ),
-                )),
-                const SizedBox(height: 20),
-                // Code QR
-                Container(
-                  padding: const EdgeInsets.all(15),
-                  decoration: BoxDecoration(
-                    color: Colors.white,
-                    border: Border.all(color: ismBrownLight),
-                    borderRadius: BorderRadius.circular(10),
-                  ),
-                  child: Column(
-                    children: [
-                      Obx(() => QrImageView(
-                        data: controller.matricule.value,
-                        version: QrVersions.auto,
-                        size: 170.0, // Taille réduite pour être cohérent avec l'écran principal
-                        gapless: true,
-                        foregroundColor: ismBrownDark,
-                      )),
-                      const SizedBox(height: 8),
-                      Obx(() => Text(
-                        controller.matricule.value,
-                        style: const TextStyle(
-                          fontSize: 14,
-                          color: ismBrown,
-                        ),
-                      )),
-                    ],
-                  ),
-                ),
-                const SizedBox(height: 20),
-                // Bouton Fermer
-                ElevatedButton(
-                  style: ElevatedButton.styleFrom(
-                    backgroundColor: ismOrange,
-                    shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(10),
-                    ),
-                    padding: const EdgeInsets.symmetric(
-                        horizontal: 32, vertical: 12),
-                  ),
-                  onPressed: () => Navigator.of(context).pop(),
-                  child: const Text('Fermer',
-                      style: TextStyle(color: Colors.white, fontSize: 16)),
-                ),
-              ],
-            ),
-          ),
-        );
-      },
-    );
-  }
-
-  Widget _buildAbsenceItemFromAbsence({
-    required BuildContext context,
-    required Absence absence,
-    required bool isSmallScreen,
-  }) {
-    final bool isRetard = absence.type?.toLowerCase() == 'retard';
-    final String formattedDate = '${absence.date.day}/${absence.date.month}/${absence.date.year}';
-    final String start = absence.heure;
-    // Éviter l'erreur si duree est null
-    final String end = absence.duree?.split('-').lastOrNull ?? start;
-    
-    return _buildAbsenceItemWithStatus(
-      context: context,
-      course: absence.module,
-      type: absence.type ?? 'Absence',
-      date: formattedDate,
-      start: start,
-      end: end,
-      isRetard: isRetard,
-      status: absence.justification,
-      statusColor: absence.justification != null ? 
-        (absence.justification!.toLowerCase() == 'justifiée' ? Colors.green : Colors.orange) : 
-        null,
-      isSmallScreen: isSmallScreen,
-      absenceId: absence.id,
-    );
-  }
-
-  Widget _buildAbsenceItemWithStatus({
-    required BuildContext context,
-    required String course,
-    required String type,
-    required String date,
-    required String start,
-    required String end,
-    required bool isRetard,
-    String? status,
-    Color? statusColor,
-    required bool isSmallScreen,
-    required String absenceId,
-  }) {
-    final Color badgeBg =
-        isRetard ? ismOrangeLight.withOpacity(0.18) : ismOrange.withOpacity(0.18);
-    final Color badgeText = isRetard ? ismOrangeLight : ismOrange;
-    final Color borderColor = isRetard ? ismOrangeLight : ismOrange;
-
-    return InkWell(
-      borderRadius: BorderRadius.circular(12),
-      onTap: () {
-        _showAbsenceDetails(context, course, type, date, start, end, isRetard, absenceId);
-      },
-      child: Container(
-        padding: EdgeInsets.all(isSmallScreen ? 12.0 : 16.0),
-        decoration: BoxDecoration(
-          color: Colors.white,
-          border: Border.all(color: borderColor.withOpacity(0.5), width: 1),
-          borderRadius: BorderRadius.circular(12),
-          boxShadow: [
-            BoxShadow(
-              color: ismBrown.withOpacity(0.05),
-              blurRadius: 6,
-              offset: const Offset(0, 2),
-            ),
-          ],
-        ),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Row(
-              children: [
-                Expanded(
-                  child: Text(
-                    course,
-                    style: TextStyle(
-                      fontSize: isSmallScreen ? 16 : 18,
-                      fontWeight: FontWeight.bold,
-                      color: ismBrownDark,
-                    ),
-                  ),
-                ),
-                if (status != null)
-                  Container(
-                    padding:
-                        const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
-                    decoration: BoxDecoration(
-                      color: statusColor?.withOpacity(0.1),
-                      borderRadius: BorderRadius.circular(4),
-                      border: Border.all(color: statusColor ?? Colors.transparent),
-                    ),
-                    child: Text(
-                      status,
-                      style: TextStyle(
-                        color: statusColor,
-                        fontSize: 12,
-                        fontWeight: FontWeight.bold,
-                      ),
-                    ),
-                  ),
-              ],
-            ),
-            const SizedBox(height: 8),
-            Row(
-              children: [
-                Container(
-                  padding:
-                      const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
-                  decoration: BoxDecoration(
-                    color: badgeBg,
-                    borderRadius: BorderRadius.circular(6),
-                  ),
-                  child: Row(
-                    mainAxisSize: MainAxisSize.min,
-                    children: [
-                      Icon(
-                        isRetard ? Icons.schedule : Icons.event_busy,
-                        color: badgeText,
-                        size: 16,
-                      ),
-                      const SizedBox(width: 4),
-                      Text(
-                        '$type • $date',
-                        style: TextStyle(
-                          color: badgeText,
-                          fontWeight: FontWeight.w600,
-                          fontSize: 12,
-                        ),
-                      ),
-                    ],
-                  ),
-                ),
-                const Spacer(),
-                Text('$start - $end',
-                    style: TextStyle(
-                        color: ismBrown,
-                        fontSize: isSmallScreen ? 12 : 14)),
-                const SizedBox(width: 8),
-                
-                // N'afficher le bouton d'options que pour les absences
-                if (!isRetard)
-                  IconButton(
-                    icon: const Icon(Icons.more_vert, color: ismBrown),
-                    onPressed: () {
-                      _showJustificationDialog(context, course, absenceId);
-                    },
-                    padding: EdgeInsets.zero,
-                    constraints: const BoxConstraints(),
-                  ),
-              ],
-            ),
-          ],
-        ),
-      ),
-    );
-  }
-
-  void _showAbsenceDetails(
-    BuildContext context,
-    String course,
-    String type,
-    String date,
-    String start,
-    String end,
-    bool isRetard,
-    String absenceId,
-  ) {
-    showModalBottomSheet(
-      context: context,
-      shape: const RoundedRectangleBorder(
-        borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
-      ),
-      backgroundColor: Colors.white,
-      builder: (context) {
-        return Padding(
-          padding: const EdgeInsets.all(20.0),
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Center(
-                child: Container(
-                  width: 60,
-                  height: 4,
-                  decoration: BoxDecoration(
-                    color: Colors.grey[300],
-                    borderRadius: BorderRadius.circular(2),
-                  ),
-                ),
-              ),
-              const SizedBox(height: 16),
-              Text(
-                course,
-                style: const TextStyle(
-                  fontSize: 20,
-                  fontWeight: FontWeight.bold,
-                  color: ismBrownDark,
-                ),
-              ),
-              const SizedBox(height: 16),
-              _buildDetailRow(Icons.calendar_today, 'Date', date),
-              _buildDetailRow(
-                  isRetard ? Icons.schedule : Icons.event_busy,
-                  'Type',
-                  type),
-              _buildDetailRow(Icons.access_time, 'Heures', '$start - $end'),
-              _buildDetailRow(Icons.person, 'Professeur', 'Prof. Dupont'),
-              _buildDetailRow(Icons.location_on, 'Salle', 'Bâtiment A - Salle 203'),
-              const SizedBox(height: 24),
-              Row(
-                children: [
-                  // Si c'est un retard, prendre toute la largeur avec le bouton Fermer
-                  Expanded(
-                    child: OutlinedButton(
-                      onPressed: () => Navigator.pop(context),
-                      style: OutlinedButton.styleFrom(
-                        padding: const EdgeInsets.symmetric(vertical: 16),
-                        shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(12),
-                        ),
-                        side: BorderSide(color: ismOrange),
-                      ),
-                      child: const Text('Fermer',
-                          style: TextStyle(color: ismOrange)),
-                    ),
-                  ),
-                  
-                  // Afficher le bouton Justifier uniquement si ce n'est pas un retard
-                  if (!isRetard) ...[
-                    const SizedBox(width: 16),
-                    Expanded(
-                      child: ElevatedButton(
-                        onPressed: () {
-                          Navigator.pop(context);
-                          _showJustificationDialog(context, course, absenceId);
-                        },
-                        style: ElevatedButton.styleFrom(
-                          backgroundColor: ismOrange,
-                          padding: const EdgeInsets.symmetric(vertical: 16),
-                          shape: RoundedRectangleBorder(
-                            borderRadius: BorderRadius.circular(12),
-                          ),
-                        ),
-                        child: const Text('Justifier',
-                            style: TextStyle(color: Colors.white)),
-                      ),
-                    ),
-                  ],
-                ],
               ),
             ],
           ),
-        );
-      },
-    );
-  }
-
-  Widget _buildDetailRow(IconData icon, String label, String value) {
-    return Padding(
-      padding: const EdgeInsets.symmetric(vertical: 8.0),
-      child: Row(
-        children: [
-          Icon(icon, color: ismBrown, size: 20),
-          const SizedBox(width: 16),
-          Text(
-            '$label: ',
-            style: const TextStyle(
-              color: ismBrown,
-              fontWeight: FontWeight.bold,
-            ),
-          ),
-          Text(
-            value,
-            style: const TextStyle(color: ismBrownDark),
-          ),
-        ],
+        ),
       ),
-    );
-  }
-
-  void _showJustificationDialog(BuildContext context, String courseName, String absenceId) {
-    final EtudiantController controller = Get.find<EtudiantController>();
-    // Réinitialiser les images sélectionnées à chaque ouverture du dialogue
-    controller.clearSelectedImages();
-    
-    showDialog(
-      context: context,
-      builder: (BuildContext context) {
-        String? selectedReason;
-        String comment = '';
-
-        return StatefulBuilder(  // Utiliser StatefulBuilder pour mettre à jour l'état dans le dialogue
-          builder: (context, setState) {
-            return Dialog(
-              shape: RoundedRectangleBorder(
-                borderRadius: BorderRadius.circular(16),
-              ),
-              child: SingleChildScrollView(
-                child: Padding(
-                  padding: const EdgeInsets.all(16.0),
-                  child: Column(
-                    mainAxisSize: MainAxisSize.min,
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Text(
-                        'Justifier $courseName',
-                        style: const TextStyle(
-                          color: ismBrownDark,
-                          fontSize: 18,
-                          fontWeight: FontWeight.bold,
-                        ),
-                      ),
-                      const SizedBox(height: 16),
-                      const Text('Veuillez sélectionner un motif de justification :'),
-                      const SizedBox(height: 12),
-                      DropdownButtonFormField<String>(
-                        decoration: InputDecoration(
-                          labelText: 'Motif',
-                          border: OutlineInputBorder(
-                            borderRadius: BorderRadius.circular(12),
-                            borderSide: BorderSide(color: ismBrownLight),
-                          ),
-                          contentPadding:
-                              const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
-                        ),
-                        style: const TextStyle(color: ismBrownDark),
-                        items: const [
-                          DropdownMenuItem(
-                              value: 'Maladie', child: Text('Maladie')),
-                          DropdownMenuItem(
-                              value: 'Problème familial',
-                              child: Text('Problème familial')),
-                          DropdownMenuItem(
-                              value: 'Problème de transport',
-                              child: Text('Problème de transport')),
-                          DropdownMenuItem(
-                              value: 'Autre', child: Text('Autre')),
-                        ],
-                        onChanged: (value) {
-                          setState(() {
-                            selectedReason = value;
-                          });
-                        },
-                      ),
-                      const SizedBox(height: 16),
-                      TextFormField(
-                        decoration: InputDecoration(
-                          labelText: 'Commentaire (optionnel)',
-                          border: OutlineInputBorder(
-                            borderRadius: BorderRadius.circular(12),
-                            borderSide: BorderSide(color: ismBrownLight),
-                          ),
-                          contentPadding:
-                              const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
-                        ),
-                        maxLines: 3,
-                        onChanged: (value) {
-                          comment = value;
-                        },
-                      ),
-                      const SizedBox(height: 16),
-                      
-                      // Section ajout d'images
-                      const Text(
-                        'Joindre des justificatifs (optionnel) :',
-                        style: TextStyle(fontWeight: FontWeight.w500),
-                      ),
-                      const SizedBox(height: 8),
-                      
-                      // Boutons pour ajouter des images
-                      Row(
-                        mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-                        children: [
-                          // Bouton galerie
-                          OutlinedButton.icon(
-                            icon: const Icon(Icons.photo_library, color: ismOrange),
-                            label: const Text('Galerie', style: TextStyle(color: ismOrange)),
-                            style: OutlinedButton.styleFrom(
-                              shape: RoundedRectangleBorder(
-                                borderRadius: BorderRadius.circular(10),
-                              ),
-                              side: const BorderSide(color: ismOrange),
-                            ),
-                            onPressed: () async {
-                              await controller.pickImages();
-                              setState(() {}); // Rafraîchir pour afficher les images
-                            },
-                          ),
-                          
-                          // Bouton appareil photo
-                          OutlinedButton.icon(
-                            icon: const Icon(Icons.camera_alt, color: ismOrange),
-                            label: const Text('Caméra', style: TextStyle(color: ismOrange)),
-                            style: OutlinedButton.styleFrom(
-                              shape: RoundedRectangleBorder(
-                                borderRadius: BorderRadius.circular(10),
-                              ),
-                              side: const BorderSide(color: ismOrange),
-                            ),
-                            onPressed: () async {
-                              await controller.takePhoto();
-                              setState(() {}); // Rafraîchir pour afficher les images
-                            },
-                          ),
-                        ],
-                      ),
-                      const SizedBox(height: 16),
-                      
-                      // Aperçu des images sélectionnées
-                      Obx(() => controller.selectedImages.isNotEmpty
-                        ? Column(
-                            crossAxisAlignment: CrossAxisAlignment.start,
-                            children: [
-                              const Text('Images sélectionnées :',
-                                  style: TextStyle(fontWeight: FontWeight.w500)),
-                              const SizedBox(height: 8),
-                              SizedBox(
-                                height: 100,
-                                child: ListView.builder(
-                                  scrollDirection: Axis.horizontal,
-                                  itemCount: controller.selectedImages.length,
-                                  itemBuilder: (context, index) {
-                                    return Stack(
-                                      children: [
-                                        Container(
-                                          margin: const EdgeInsets.only(right: 8),
-                                          width: 100,
-                                          height: 100,
-                                          decoration: BoxDecoration(
-                                            borderRadius: BorderRadius.circular(8),
-                                            image: DecorationImage(
-                                              image: FileImage(controller.selectedImages[index]),
-                                              fit: BoxFit.cover,
-                                            ),
-                                          ),
-                                        ),
-                                        Positioned(
-                                          right: 0,
-                                          top: 0,
-                                          child: GestureDetector(
-                                            onTap: () {
-                                              controller.removeImage(index);
-                                              setState(() {}); // Rafraîchir l'UI
-                                            },
-                                            child: Container(
-                                              padding: const EdgeInsets.all(4),
-                                              decoration: const BoxDecoration(
-                                                color: Colors.red,
-                                                shape: BoxShape.circle,
-                                              ),
-                                              child: const Icon(
-                                                Icons.close,
-                                                color: Colors.white,
-                                                size: 16,
-                                              ),
-                                            ),
-                                          ),
-                                        ),
-                                      ],
-                                    );
-                                  },
-                                ),
-                              ),
-                            ],
-                          )
-                        : Container(),
-                      ),
-                      
-                      const SizedBox(height: 24),
-                      Row(
-                        mainAxisAlignment: MainAxisAlignment.end,
-                        children: [
-                          TextButton(
-                            onPressed: () {
-                              controller.clearSelectedImages(); // Nettoyer les images
-                              Navigator.of(context).pop();
-                            },
-                            child: const Text('Annuler',
-                                style: TextStyle(color: ismBrown)),
-                          ),
-                          const SizedBox(width: 8),
-                          ElevatedButton(
-                            style: ElevatedButton.styleFrom(
-                              backgroundColor: ismOrange,
-                              shape: RoundedRectangleBorder(
-                                borderRadius: BorderRadius.circular(12),
-                              ),
-                            ),
-                            onPressed: () async {
-                              // Vérifier si un motif est sélectionné
-                              if (absenceId.isNotEmpty && selectedReason != null) {
-                                // Afficher un indicateur de chargement pendant l'envoi
-                                showDialog(
-                                  context: context,
-                                  barrierDismissible: false,
-                                  builder: (BuildContext context) {
-                                    return const AlertDialog(
-                                      content: Row(
-                                        children: [
-                                          CircularProgressIndicator(color: ismOrange),
-                                          SizedBox(width: 20),
-                                          Text("Envoi en cours...")
-                                        ],
-                                      ),
-                                    );
-                                  },
-                                );
-                                
-                                // Envoyer la justification avec le contrôleur
-                                final success = await controller.envoyerJustification(
-                                  absenceId, 
-                                  selectedReason!, 
-                                  comment,
-                                );
-                                
-                                // Fermer le dialogue de chargement
-                                Navigator.of(context).pop();
-                                
-                                // Fermer le dialogue de justification
-                                Navigator.of(context).pop();
-                                
-                                // Afficher un message de confirmation
-                                ScaffoldMessenger.of(context).showSnackBar(
-                                  SnackBar(
-                                    content: Text(success 
-                                      ? 'Justification pour $courseName envoyée avec succès'
-                                      : 'Erreur lors de l\'envoi de la justification'),
-                                    backgroundColor: success ? Colors.green : Colors.red,
-                                    behavior: SnackBarBehavior.floating,
-                                    shape: RoundedRectangleBorder(
-                                      borderRadius: BorderRadius.circular(10),
-                                    ),
-                                  ),
-                                );
-                              } else {
-                                // Afficher un message d'erreur si aucun motif n'est sélectionné
-                                ScaffoldMessenger.of(context).showSnackBar(
-                                  SnackBar(
-                                    content: const Text('Veuillez sélectionner un motif de justification'),
-                                    backgroundColor: Colors.red,
-                                    behavior: SnackBarBehavior.floating,
-                                    shape: RoundedRectangleBorder(
-                                      borderRadius: BorderRadius.circular(10),
-                                    ),
-                                  ),
-                                );
-                              }
-                            },
-                            child: const Text('Envoyer',
-                                style: TextStyle(color: Colors.white)),
-                          ),
-                        ],
-                      ),
-                    ],
-                  ),
-                ),
-              ),
-            );
-          }
-        );
-      },
     );
   }
 
@@ -975,6 +349,271 @@ class EtudiantAbsenceList extends StatelessWidget {
           ],
         );
       },
+    );
+  }
+
+  // Ajouter cette méthode à la classe
+  Widget buildImageWidget(dynamic image) {
+    return Container(
+      margin: const EdgeInsets.only(right: 8),
+      width: 100,
+      height: 100,
+      decoration: BoxDecoration(
+        borderRadius: BorderRadius.circular(8),
+        image: DecorationImage(
+          image: _getImageProvider(image),
+          fit: BoxFit.cover,
+        ),
+      ),
+    );
+  }
+
+  // Fonction utilitaire pour obtenir le bon ImageProvider selon la plateforme
+  ImageProvider _getImageProvider(dynamic image) {
+    if (kIsWeb) {
+      // Sur le web
+      if (image is XFile) {
+        return NetworkImage(image.path);
+      } else if (image is String) {
+        return NetworkImage(image);
+      }
+      // Fallback pour les autres types sur le web
+      return const AssetImage('assets/images/student_photo.jpeg');
+    } else {
+      // Sur mobile, l'image est un File
+      if (image is File) {
+        return FileImage(image);
+      } else if (image is XFile) {
+        return FileImage(File(image.path));
+      } else if (image is String) {
+        return NetworkImage(image);
+      }
+    }
+    
+    // Fallback sur une image par défaut si le type n'est pas reconnu
+    return const AssetImage('assets/images/student_photo.jpeg');
+  }
+
+  // Méthode pour construire un élément d'interface pour une absence
+  Widget _buildAbsenceItemFromAbsence({
+    required BuildContext context,
+    required Absence absence,
+    required bool isSmallScreen,
+  }) {
+    return Container(
+      margin: const EdgeInsets.only(bottom: 12),
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(10),
+        boxShadow: [
+          BoxShadow(
+            color: ismBrown.withOpacity(0.08),
+            blurRadius: 6,
+            offset: const Offset(0, 2),
+          ),
+        ],
+        border: Border.all(color: Colors.grey.withOpacity(0.2)),
+      ),
+      child: Material(
+        color: Colors.transparent,
+        child: InkWell(
+          borderRadius: BorderRadius.circular(10),
+          onTap: () => _showAbsenceDetails(context, absence),
+          child: Padding(
+            padding: const EdgeInsets.all(14),
+            child: Row(
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              children: [
+                Row(
+                  children: [
+                    // Indicateur de type d'absence (couleur)
+                    Container(
+                      width: 5,
+                      height: 40,
+                      decoration: BoxDecoration(
+                        color: _getAbsenceColor(absence.type ?? ''),
+                        borderRadius: BorderRadius.circular(10),
+                      ),
+                    ),
+                    const SizedBox(width: 12),
+                    Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text(
+                          absence.module,
+                          style: const TextStyle(
+                            fontSize: 16,
+                            fontWeight: FontWeight.bold,
+                            color: ismBrownDark,
+                          ),
+                        ),
+                        const SizedBox(height: 4),
+                        Text(
+                          '${absence.professeur ?? 'Prof'} - ${absence.salle ?? 'Salle'}',
+                          style: TextStyle(
+                            fontSize: 14,
+                            color: Colors.grey[700],
+                          ),
+                        ),
+                      ],
+                    ),
+                  ],
+                ),
+                Column(
+                  crossAxisAlignment: CrossAxisAlignment.end,
+                  children: [
+                    Text(
+                      absence.heure,
+                      style: const TextStyle(
+                        fontSize: 14,
+                        fontWeight: FontWeight.w500,
+                        color: ismBrown,
+                      ),
+                    ),
+                    const SizedBox(height: 4),
+                    _buildStatusBadge(absence.status),
+                  ],
+                ),
+              ],
+            ),
+          ),
+        ),
+      ),
+    );
+  }
+  
+  // Méthodes utilitaires pour l'affichage des absences
+  Widget _buildStatusBadge(String status) {
+    Color backgroundColor;
+    Color textColor;
+    IconData? icon;
+
+    switch (status.toLowerCase()) {
+      case 'validée':
+      case 'justifié':
+        backgroundColor = Colors.green.withOpacity(0.15);
+        textColor = Colors.green[700]!;
+        icon = Icons.check_circle_outline;
+        break;
+      case 'en attente':
+        backgroundColor = Colors.orange.withOpacity(0.15);
+        textColor = Colors.orange[700]!;
+        icon = Icons.access_time;
+        break;
+      case 'rejetée':
+        backgroundColor = Colors.red.withOpacity(0.15);
+        textColor = Colors.red[700]!;
+        icon = Icons.cancel_outlined;
+        break;
+      case 'non justifiée':
+      case 'non justifié':
+        backgroundColor = Colors.grey.withOpacity(0.15);
+        textColor = Colors.grey[700]!;
+        icon = Icons.error_outline;
+        break;
+      default:
+        backgroundColor = Colors.grey.withOpacity(0.15);
+        textColor = Colors.grey[700]!;
+        icon = null;
+    }
+
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
+      decoration: BoxDecoration(
+        color: backgroundColor,
+        borderRadius: BorderRadius.circular(20),
+      ),
+      child: Row(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          if (icon != null) ...[
+            Icon(icon, size: 12, color: textColor),
+            const SizedBox(width: 4),
+          ],
+          Text(
+            status,
+            style: TextStyle(
+              fontSize: 12,
+              fontWeight: FontWeight.w500,
+              color: textColor,
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Color _getAbsenceColor(String type) {
+    switch (type.toLowerCase()) {
+      case 'absence':
+        return Colors.red;
+      case 'retard':
+        return ismOrange;
+      case 'sortie anticipée':
+        return Colors.blue;
+      default:
+        return Colors.grey;
+    }
+  }
+  
+  void _showAbsenceDetails(BuildContext context, Absence absence) {
+    final bool isRetard = absence.type?.toLowerCase() == 'retard';
+    
+    showDialog(
+      context: context,
+      builder: (context) => AlertDialog(
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.circular(16),
+        ),
+        title: Text(
+          isRetard ? 'Détails du retard' : 'Détails de l\'absence',
+          style: const TextStyle(color: ismBrownDark),
+        ),
+        content: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            _buildDetailItem('Module', absence.module),
+            _buildDetailItem('Date', DateFormat('dd/MM/yyyy').format(absence.date)),
+            _buildDetailItem('Heure', absence.heure),
+            _buildDetailItem('Professeur', absence.professeur ?? 'Non spécifié'),
+            _buildDetailItem('Salle', absence.salle ?? 'Non spécifiée'),
+            _buildDetailItem('Statut', absence.status),
+            if (absence.justification != null && absence.justification!.isNotEmpty)
+              _buildDetailItem('Justification', absence.justification!),
+          ],
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.of(context).pop(),
+            child: const Text('Fermer', style: TextStyle(color: ismOrange)),
+          ),
+        ],
+      ),
+    );
+  }
+  
+  Widget _buildDetailItem(String label, String value) {
+    return Padding(
+      padding: const EdgeInsets.only(bottom: 8.0),
+      child: Row(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text(
+            '$label: ',
+            style: const TextStyle(
+              fontWeight: FontWeight.bold,
+              color: ismBrownDark,
+            ),
+          ),
+          Expanded(
+            child: Text(
+              value,
+              style: const TextStyle(color: ismBrown),
+            ),
+          ),
+        ],
+      ),
     );
   }
 }

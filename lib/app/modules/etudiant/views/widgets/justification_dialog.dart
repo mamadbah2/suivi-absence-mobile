@@ -1,4 +1,5 @@
 import 'dart:io';
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:image_picker/image_picker.dart';
@@ -52,7 +53,11 @@ class _JustificationDialogState extends State<JustificationDialog> {
       );
       
       if (image != null) {
-        _controller.selectedImages.add(File(image.path));
+        if (kIsWeb) {
+          _controller.selectedImages.add(image);
+        } else {
+          _controller.selectedImages.add(File(image.path));
+        }
       }
     } catch (e) {
       Get.snackbar(
@@ -103,6 +108,7 @@ class _JustificationDialogState extends State<JustificationDialog> {
           widget.absence.id,
           _motifController.text,
           _commentaireController.text,
+          _controller.selectedImages, // Transmettre explicitement les images sélectionnées
         );
 
         if (success) {
@@ -294,12 +300,12 @@ class _JustificationDialogState extends State<JustificationDialog> {
                               width: 100,
                               height: 100,
                               decoration: BoxDecoration(
-                                border: Border.all(color: Colors.grey),
                                 borderRadius: BorderRadius.circular(8),
                                 image: DecorationImage(
-                                  image: FileImage(_controller.selectedImages[index]),
+                                  image: _controller.getImageProvider(_controller.selectedImages[index]),
                                   fit: BoxFit.cover,
                                 ),
+                                border: Border.all(color: Colors.grey.shade400),
                               ),
                             ),
                             Positioned(
