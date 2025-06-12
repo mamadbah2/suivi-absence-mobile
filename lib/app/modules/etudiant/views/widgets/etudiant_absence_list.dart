@@ -10,6 +10,7 @@ import '../../../../data/models/absence.dart';
 import '../../../../data/controllers/auth_controller.dart';
 import '../../../../routes/app_pages.dart';
 import './all_absences_page.dart';
+import './justification_dialog.dart'; // Import du widget de justification
 
 // Définition des couleurs ISM avec des nuances améliorées
 const Color ismBrownDark = Color(0xFF43291b);
@@ -400,6 +401,10 @@ class EtudiantAbsenceList extends StatelessWidget {
     required Absence absence,
     required bool isSmallScreen,
   }) {
+    // Déterminer si l'absence est justifiable (non justifiée et pas en attente)
+    final bool canJustify = absence.status.toLowerCase() != 'justifié' && 
+                           absence.status.toLowerCase() != 'en attente';
+    
     return Container(
       margin: const EdgeInsets.only(bottom: 12),
       decoration: BoxDecoration(
@@ -421,63 +426,103 @@ class EtudiantAbsenceList extends StatelessWidget {
           onTap: () => _showAbsenceDetails(context, absence),
           child: Padding(
             padding: const EdgeInsets.all(14),
-            child: Row(
-              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            child: Column(
               children: [
                 Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
                   children: [
-                    // Indicateur de type d'absence (couleur)
-                    Container(
-                      width: 5,
-                      height: 40,
-                      decoration: BoxDecoration(
-                        color: _getAbsenceColor(absence.type ?? ''),
-                        borderRadius: BorderRadius.circular(10),
-                      ),
+                    Row(
+                      children: [
+                        // Indicateur de type d'absence (couleur)
+                        Container(
+                          width: 5,
+                          height: 40,
+                          decoration: BoxDecoration(
+                            color: _getAbsenceColor(absence.type ?? ''),
+                            borderRadius: BorderRadius.circular(10),
+                          ),
+                        ),
+                        const SizedBox(width: 12),
+                        Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Text(
+                              absence.module,
+                              style: const TextStyle(
+                                fontSize: 16,
+                                fontWeight: FontWeight.bold,
+                                color: ismBrownDark,
+                              ),
+                            ),
+                            const SizedBox(height: 4),
+                            Text(
+                              '${absence.professeur ?? 'Prof'} - ${absence.salle ?? 'Salle'}',
+                              style: TextStyle(
+                                fontSize: 14,
+                                color: Colors.grey[700],
+                              ),
+                            ),
+                          ],
+                        ),
+                      ],
                     ),
-                    const SizedBox(width: 12),
                     Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
+                      crossAxisAlignment: CrossAxisAlignment.end,
                       children: [
                         Text(
-                          absence.module,
+                          absence.heure,
                           style: const TextStyle(
-                            fontSize: 16,
-                            fontWeight: FontWeight.bold,
-                            color: ismBrownDark,
+                            fontSize: 14,
+                            fontWeight: FontWeight.w500,
+                            color: ismBrown,
                           ),
                         ),
                         const SizedBox(height: 4),
-                        Text(
-                          '${absence.professeur ?? 'Prof'} - ${absence.salle ?? 'Salle'}',
-                          style: TextStyle(
-                            fontSize: 14,
-                            color: Colors.grey[700],
-                          ),
-                        ),
+                        _buildStatusBadge(absence.status),
                       ],
                     ),
                   ],
                 ),
-                Column(
-                  crossAxisAlignment: CrossAxisAlignment.end,
-                  children: [
-                    Text(
-                      absence.heure,
-                      style: const TextStyle(
-                        fontSize: 14,
-                        fontWeight: FontWeight.w500,
-                        color: ismBrown,
+                // Ajout du bouton de justification si applicable
+                if (canJustify)
+                  Container(
+                    width: double.infinity,
+                    margin: const EdgeInsets.only(top: 10),
+                    child: ElevatedButton.icon(
+                      onPressed: () => _openJustificationDialog(context, absence),
+                      icon: const Icon(Icons.note_add, size: 16),
+                      label: const Text('Justifier'),
+                      style: ElevatedButton.styleFrom(
+                        backgroundColor: ismOrangeLight,
+                        foregroundColor: Colors.white,
+                        padding: const EdgeInsets.symmetric(vertical: 8, horizontal: 12),
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(8),
+                        ),
+                        elevation: 0,
                       ),
                     ),
-                    const SizedBox(height: 4),
-                    _buildStatusBadge(absence.status),
-                  ],
-                ),
+                  ),
               ],
             ),
           ),
         ),
+      ),
+    );
+  }
+  
+  // Méthode pour ouvrir la boite de dialogue de justification
+  void _openJustificationDialog(BuildContext context, Absence absence) {
+    // Importer le widget JustificationDialog au début du fichier si ce n'est pas déjà fait
+    showDialog(
+      context: context,
+      builder: (context) => JustificationDialog(
+        absence: absence,
+        onSuccess: () {
+          // Rafraîchir les absences après la soumission réussie
+          final EtudiantController controller = Get.find<EtudiantController>();
+          controller.fetchAbsences();
+        },
       ),
     );
   }
