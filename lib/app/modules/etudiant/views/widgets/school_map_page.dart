@@ -14,8 +14,8 @@ class SchoolMapPage extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    // Coordonnées de l'école (exemple: ISM Dakar)
-    final LatLng schoolLocation = LatLng(14.6937, -17.4441);
+    // Coordonnées exactes de l'école (ISM Dakar)
+    final LatLng schoolLocation = LatLng(14.69075473348019, -17.45842009044329);
     
     return Scaffold(
       appBar: AppBar(
