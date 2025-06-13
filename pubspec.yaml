@@ -38,6 +38,8 @@ dependencies:
   flutter_secure_storage: ^9.0.0  # Ajout de la dépendance pour stocker le JWT de manière sécurisée
   http: ^1.4.0  # Package pour les requêtes HTTP sans problèmes CORS
   image_picker: ^1.0.7  # Pour sélectionner des images depuis la galerie ou la caméra
+  flutter_map: ^6.1.0  # Package pour afficher les cartes OpenStreetMap
+  latlong2: ^0.9.0  # Package pour gérer les coordonnées géographiques
 
   # The following adds the Cupertino Icons font to your application.
   # Use with the CupertinoIcons class for iOS style icons.

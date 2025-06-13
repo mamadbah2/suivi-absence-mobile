@@ -11,6 +11,7 @@ import '../../../../data/controllers/auth_controller.dart';
 import '../../../../routes/app_pages.dart';
 import './all_absences_page.dart';
 import './justification_dialog.dart'; // Import du widget de justification
+import './school_map_page.dart'; // Import de la page de carte
 
 // Définition des couleurs ISM avec des nuances améliorées
 const Color ismBrownDark = Color(0xFF43291b);
@@ -82,6 +83,37 @@ class EtudiantAbsenceList extends StatelessWidget {
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               _buildStudentProfileWithQR(context, isSmallScreen, controller),
+              
+              // Bouton pour localiser l'école
+              Container(
+                width: double.infinity,
+                padding: const EdgeInsets.symmetric(horizontal: 8.0),
+                margin: const EdgeInsets.only(bottom: 16.0),
+                child: ElevatedButton.icon(
+                  onPressed: () {
+                    Navigator.of(context).push(
+                      MaterialPageRoute(
+                        builder: (context) => const SchoolMapPage(),
+                      ),
+                    );
+                  },
+                  icon: const Icon(Icons.location_on, color: Colors.white),
+                  label: const Text('Localiser mon école', 
+                    style: TextStyle(
+                      color: Colors.white,
+                      fontWeight: FontWeight.bold,
+                    ),
+                  ),
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: ismBrownDark,
+                    padding: const EdgeInsets.symmetric(vertical: 12),
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(10),
+                    ),
+                    elevation: 3,
+                  ),
+                ),
+              ),
 
               // Code QR pour remplacer les statistiques
               Container(
@@ -295,6 +327,35 @@ class EtudiantAbsenceList extends StatelessWidget {
                     child: Image(
                       image: _getImageProvider('assets/images/Et1.jpg'),
                       fit: BoxFit.cover,
+                    ),
+                  ),
+                ),
+              ),
+              // Bouton pour accéder à la carte de l'école
+              Positioned(
+                bottom: 20,
+                right: 0,
+                left: 0,
+                child: Center(
+                  child: ElevatedButton.icon(
+                    onPressed: () {
+                      // Fermer la boîte de dialogue avec la photo
+                      Navigator.of(context).pop();
+                      // Ouvrir la page de la carte
+                      Navigator.of(context).push(
+                        MaterialPageRoute(
+                          builder: (context) => const SchoolMapPage(),
+                        ),
+                      );
+                    },
+                    icon: const Icon(Icons.location_on, color: Colors.white),
+                    label: const Text('Localiser mon école', style: TextStyle(color: Colors.white)),
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: ismOrange,
+                      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(30),
+                      ),
                     ),
                   ),
                 ),
