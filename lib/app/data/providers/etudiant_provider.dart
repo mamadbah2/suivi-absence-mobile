@@ -365,6 +365,45 @@ class EtudiantProvider extends GetxController {
     }
   }
   
+  // Soumet une justification sans image avec le nouvel endpoint
+  Future<bool> updateAbsenceJustification(String absenceId, String justification) async {
+    try {
+      print("EtudiantProvider: Mise à jour de la justification pour l'absence $absenceId");
+      
+      if (_useSimulation) {
+        print("Mode simulation activé: simulation de la mise à jour de justification");
+        await Future.delayed(const Duration(milliseconds: 500));
+        return true;
+      }
+      
+      // Obtenir les en-têtes avec le token JWT
+      final headers = await _getHeaders();
+      
+      final body = jsonEncode({
+        'id': absenceId,
+        'justification': justification
+      });
+      
+      final response = await http.put(
+        Uri.parse('$baseUrl/absences/update/justification'),
+        headers: headers,
+        body: body,
+      );
+      
+      if (response.statusCode != 200) {
+        print("Erreur API: ${response.statusCode}");
+        print("Détails: ${response.body}");
+        return false;
+      }
+      
+      print("Justification mise à jour avec succès");
+      return true;
+    } catch (e) {
+      print("Exception lors de la mise à jour de la justification: $e");
+      return false;
+    }
+  }
+  
   // Récupère les absences d'un étudiant par son matricule
   Future<List<Absence>> getAbsencesEtudiant(String matricule) async {
     try {
@@ -416,9 +455,9 @@ class EtudiantProvider extends GetxController {
             
             return absencesList.map((item) {
               try {
-                // Conversion au format Absence
+                // Conversion au format Absence avec les champs du nouveau format d'API
                 return Absence(
-                  id: '${etudiantMatricule}_${item['module']}_${item['date']}',
+                  id: item['id']?.toString() ?? '', // Utiliser directement l'ID fourni par l'API
                   matricule: etudiantMatricule,
                   nom: etudiantNom,
                   prenom: etudiantPrenom,

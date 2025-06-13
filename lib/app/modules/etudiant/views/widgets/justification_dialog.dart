@@ -76,40 +76,35 @@ class _JustificationDialogState extends State<JustificationDialog> {
 
   Future<void> _soumettreJustification() async {
     if (_formKey.currentState!.validate()) {
-      if (_controller.selectedImages.isEmpty) {
-        // Demander confirmation si aucune image n'est jointe
-        final shouldContinue = await showDialog<bool>(
-          context: context,
-          builder: (context) => AlertDialog(
-            title: const Text('Aucun justificatif'),
-            content: const Text('Vous n\'avez joint aucune image. Voulez-vous continuer sans justificatif ?'),
-            actions: [
-              TextButton(
-                onPressed: () => Navigator.pop(context, false),
-                child: const Text('Annuler'),
-              ),
-              TextButton(
-                onPressed: () => Navigator.pop(context, true),
-                child: const Text('Continuer'),
-              ),
-            ],
-          ),
-        );
-        
-        if (shouldContinue != true) return;
-      }
-      
       setState(() {
         _isSubmitting = true;
       });
 
       try {
-        final success = await _controller.envoyerJustification(
-          widget.absence.id,
-          _motifController.text,
-          _commentaireController.text,
-          _controller.selectedImages, // Transmettre explicitement les images sélectionnées
-        );
+        bool success;
+        
+        // Utiliser un endpoint différent selon qu'il y a des images ou non
+        if (_controller.selectedImages.isEmpty) {
+          // Sans image: utiliser le nouvel endpoint PUT /absences/update/justification
+          // On combine le motif et le commentaire pour la justification
+          String justificationText = _motifController.text;
+          if (_commentaireController.text.isNotEmpty) {
+            justificationText += " - ${_commentaireController.text}";
+          }
+          
+          success = await _controller.updateJustification(
+            widget.absence.id,
+            justificationText,
+          );
+        } else {
+          // Avec images: utiliser l'ancien endpoint qui gère l'upload des fichiers
+          success = await _controller.envoyerJustification(
+            widget.absence.id,
+            _motifController.text,
+            _commentaireController.text,
+            _controller.selectedImages, 
+          );
+        }
 
         if (success) {
           Navigator.of(context).pop();

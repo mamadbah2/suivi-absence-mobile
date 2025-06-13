@@ -181,6 +181,30 @@ class EtudiantController extends GetxController {
     }
   }
 
+  // Méthode pour mettre à jour une justification sans image
+  Future<bool> updateJustification(String absenceId, String justification) async {
+    try {
+      print('Mise à jour de la justification pour absence ID: $absenceId');
+      print('Justification: $justification');
+      
+      // Appeler l'API pour mettre à jour la justification sans image
+      final success = await _etudiantProvider.updateAbsenceJustification(
+        absenceId, 
+        justification,
+      );
+      
+      // Si succès, rafraîchir les données
+      if (success) {
+        await fetchAbsences(); // Rafraîchir les absences
+        return true;
+      }
+      return false;
+    } catch (e) {
+      print('Erreur lors de la mise à jour de la justification: $e');
+      return false;
+    }
+  }
+
   // Obtenir les absences pour aujourd'hui uniquement  
   List<Absence> getAbsencesForToday() {
     final today = DateTime.now();
