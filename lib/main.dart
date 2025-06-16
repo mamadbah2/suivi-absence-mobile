@@ -1,9 +1,24 @@
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'app/routes/app_pages.dart';
-import 'app/data/providers/auth_provider.dart'; // Import AuthProvider
+import 'app/data/providers/auth_provider.dart';
+import 'app/data/services/supabase_service.dart'; // Import du service Supabase
+import 'app/data/config/app_config.dart'; // Import des configurations
 
-void main() {
+void main() async {
+  WidgetsFlutterBinding.ensureInitialized();
+  
+  // Initialiser Supabase avant tout
+  try {
+    await SupabaseService.initialize(
+      supabaseUrl: AppConfig.supabaseUrl,
+      supabaseAnonKey: AppConfig.supabaseAnonKey,
+    );
+    print('Supabase initialisé avec succès');
+  } catch (e) {
+    print('Erreur lors de l\'initialisation de Supabase: $e');
+  }
+  
   // Initialiser les services et providers globaux
   Get.put(AuthProvider(), permanent: true);
   // Get.put(EtudiantService()); // Commented out as EtudiantService.dart is missing

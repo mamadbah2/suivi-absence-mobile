@@ -1,4 +1,5 @@
 import 'dart:io';
+import 'dart:convert'; // Ajout pour la conversion Base64
 import 'package:flutter/foundation.dart' show kIsWeb;
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
@@ -7,6 +8,7 @@ import 'dart:typed_data';
 import '../../../data/models/absence.dart';
 import '../../../data/controllers/auth_controller.dart';
 import '../../../data/providers/etudiant_provider.dart';
+import '../../../data/services/supabase_service.dart'; // Import du service Supabase
 
 class EtudiantController extends GetxController {
   final RxList<Absence> mesAbsences = <Absence>[].obs;
@@ -17,6 +19,9 @@ class EtudiantController extends GetxController {
 
   // Modifier la liste pour qu'elle puisse contenir les deux types (File et XFile)
   RxList<dynamic> selectedImages = RxList<dynamic>([]);
+
+  // Liste pour stocker les URLs des images uploadées sur Supabase
+  RxList<String> uploadedImageUrls = RxList<String>([]);
 
   // Stats des absences
   final RxInt absenceCumulee = 31.obs; // en heures
@@ -87,19 +92,45 @@ class EtudiantController extends GetxController {
       );
       
       if (images != null && images.isNotEmpty) {
-        // Ajouter les nouvelles images sélectionnées à la liste
+        print('\n========= DÉBUT UPLOAD IMAGES GALERIE (${images.length}) =========');
+        
+        // Uploader les images sur Supabase immédiatement
         for (var image in images) {
+          // Ajouter l'image à la liste pour affichage temporaire
           if (kIsWeb) {
-            // Sur le web, on stocke directement l'objet XFile
             selectedImages.add(image);
           } else {
-            // Sur mobile, on peut utiliser File
             selectedImages.add(File(image.path));
           }
+          
+          // Upload de l'image sur Supabase
+          final url = await SupabaseService.uploadImage(image);
+          if (url != null) {
+            uploadedImageUrls.add(url);
+            print('\n✅ IMAGE UPLOADÉE AVEC SUCCÈS:');
+            print('📋 URL: $url');
+            print('📊 Total URLs disponibles: ${uploadedImageUrls.length}');
+          } else {
+            print('\n❌ ÉCHEC UPLOAD IMAGE');
+          }
         }
+        
+        // Afficher toutes les URLs
+        print('\n📊 RÉCAPITULATIF DES URLS:');
+        for (int i = 0; i < uploadedImageUrls.length; i++) {
+          print('   URL #${i+1}: ${uploadedImageUrls[i]}');
+        }
+        print('========= FIN UPLOAD IMAGES =========\n');
       }
     } catch (e) {
-      print('Erreur lors de la sélection d\'images: $e');
+      print('\n❌ ERREUR UPLOAD: $e');
+      Get.snackbar(
+        'Erreur',
+        'Impossible de charger les images: $e',
+        snackPosition: SnackPosition.BOTTOM,
+        backgroundColor: Colors.red,
+        colorText: Colors.white,
+      );
     }
   }
 
@@ -113,16 +144,42 @@ class EtudiantController extends GetxController {
       );
       
       if (photo != null) {
+        print('\n========= DÉBUT UPLOAD PHOTO CAMÉRA =========');
+        
+        // Ajouter la photo à la liste pour affichage temporaire
         if (kIsWeb) {
-          // Sur le web, on stocke directement l'objet XFile
           selectedImages.add(photo);
         } else {
-          // Sur mobile, on peut utiliser File
           selectedImages.add(File(photo.path));
         }
+        
+        // Upload de l'image sur Supabase
+        final url = await SupabaseService.uploadImage(photo);
+        if (url != null) {
+          uploadedImageUrls.add(url);
+          print('\n✅ PHOTO UPLOADÉE AVEC SUCCÈS:');
+          print('📋 URL: $url');
+          print('📊 Total URLs disponibles: ${uploadedImageUrls.length}');
+        } else {
+          print('\n❌ ÉCHEC UPLOAD PHOTO');
+        }
+        
+        // Afficher toutes les URLs
+        print('\n📊 RÉCAPITULATIF DES URLS:');
+        for (int i = 0; i < uploadedImageUrls.length; i++) {
+          print('   URL #${i+1}: ${uploadedImageUrls[i]}');
+        }
+        print('========= FIN UPLOAD PHOTO =========\n');
       }
     } catch (e) {
-      print('Erreur lors de la prise de photo: $e');
+      print('\n❌ ERREUR UPLOAD PHOTO: $e');
+      Get.snackbar(
+        'Erreur',
+        'Impossible de prendre une photo: $e',
+        snackPosition: SnackPosition.BOTTOM,
+        backgroundColor: Colors.red,
+        colorText: Colors.white,
+      );
     }
   }
 
@@ -130,54 +187,62 @@ class EtudiantController extends GetxController {
   void removeImage(int index) {
     if (index >= 0 && index < selectedImages.length) {
       selectedImages.removeAt(index);
+      // Supprimer également l'URL correspondante si disponible
+      if (index < uploadedImageUrls.length) {
+        uploadedImageUrls.removeAt(index);
+      }
     }
   }
 
   // Vider la liste des images sélectionnées
   void clearSelectedImages() {
     selectedImages.clear();
+    uploadedImageUrls.clear();
   }
 
-  // Méthodes pour la justification des absences
+  // Méthodes pour la justification des absences avec URLs d'images Supabase
   Future<bool> envoyerJustification(
       String absenceId, String motif, String commentaire, [List<dynamic>? images]) async {
     try {
-      // Utiliser les images passées en paramètre ou les images sélectionnées
-      final dynamicImages = images ?? selectedImages;
+      // Utiliser les URLs d'images uploadées
+      final urls = uploadedImageUrls;
       
-      // Convertir les images en List<File> comme attendu par l'API
-      List<File> imageFiles = [];
-      for (var img in dynamicImages) {
-        if (img is File) {
-          imageFiles.add(img);
-        } else if (img is XFile) {
-          imageFiles.add(File(img.path));
+      print('\n========= ENVOI DE JUSTIFICATION AU BACKEND =========');
+      print('📝 Absence ID: $absenceId');
+      print('📝 Motif: $motif');
+      print('📝 Commentaire: $commentaire');
+      print('🖼️ Nombre d\'URLs d\'images: ${urls.length}');
+      
+      if (urls.isNotEmpty) {
+        print('\n📤 URLS DES IMAGES ENVOYÉES AU BACKEND:');
+        for (int i = 0; i < urls.length; i++) {
+          print('   URL #${i+1}: ${urls[i]}');
         }
       }
       
-      // Afficher des informations de débogage
-      print('Envoi de justification pour absence ID: $absenceId');
-      print('Motif: $motif');
-      print('Nombre d\'images jointes: ${imageFiles.length}');
-      
-      // Appeler l'API pour envoyer la justification avec les images
-      final success = await _etudiantProvider.soumettreJustificationAvecImages(
+      // Appeler l'API pour envoyer la justification avec les URLs des images
+      final success = await _etudiantProvider.soumettreJustificationAvecUrls(
         absenceId, 
         motif, 
         commentaire, 
-        imageFiles,
+        urls,
       );
       
       // Si succès, vider les images et rafraîchir les données
       if (success) {
+        print('\n✅ JUSTIFICATION ENVOYÉE AVEC SUCCÈS');
         clearSelectedImages();
         await fetchAbsences(); // Rafraîchir les absences
         return true;
+      } else {
+        print('\n❌ ÉCHEC DE L\'ENVOI DE LA JUSTIFICATION');
+        return false;
       }
-      return false;
     } catch (e) {
-      print('Erreur lors de l\'envoi de la justification: $e');
+      print('\n❌ ERREUR LORS DE L\'ENVOI DE LA JUSTIFICATION: $e');
       return false;
+    } finally {
+      print('========= FIN ENVOI JUSTIFICATION =========\n');
     }
   }
 

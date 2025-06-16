@@ -33,6 +33,7 @@ class _JustificationDialogState extends State<JustificationDialog> {
   final _commentaireController = TextEditingController();
   final _controller = Get.find<EtudiantController>();
   bool _isSubmitting = false;
+  bool _isUploading = false;
 
   @override
   void dispose() {
@@ -41,39 +42,42 @@ class _JustificationDialogState extends State<JustificationDialog> {
     super.dispose();
   }
 
+  // Méthode pour sélectionner des images depuis la galerie (utilise l'upload Supabase)
   Future<void> _pickImages() async {
-    await _controller.pickImages();
-  }
-
-  Future<void> _pickImageFromCamera() async {
+    setState(() {
+      _isUploading = true;
+    });
+    
     try {
-      final XFile? image = await ImagePicker().pickImage(
-        source: ImageSource.camera,
-        imageQuality: 80,
-      );
-      
-      if (image != null) {
-        if (kIsWeb) {
-          _controller.selectedImages.add(image);
-        } else {
-          _controller.selectedImages.add(File(image.path));
-        }
-      }
-    } catch (e) {
-      Get.snackbar(
-        'Erreur',
-        'Impossible d\'accéder à l\'appareil photo: $e',
-        snackPosition: SnackPosition.BOTTOM,
-        backgroundColor: Colors.red,
-        colorText: Colors.white,
-      );
+      await _controller.pickImages();
+    } finally {
+      setState(() {
+        _isUploading = false;
+      });
     }
   }
 
+  // Méthode pour prendre une photo avec la caméra (utilise l'upload Supabase)
+  Future<void> _pickImageFromCamera() async {
+    setState(() {
+      _isUploading = true;
+    });
+    
+    try {
+      await _controller.takePhoto();
+    } finally {
+      setState(() {
+        _isUploading = false;
+      });
+    }
+  }
+
+  // Supprimer une image
   void _removeImage(int index) {
     _controller.removeImage(index);
   }
 
+  // Soumettre la justification avec les URLs des images Supabase
   Future<void> _soumettreJustification() async {
     if (_formKey.currentState!.validate()) {
       setState(() {
@@ -81,30 +85,12 @@ class _JustificationDialogState extends State<JustificationDialog> {
       });
 
       try {
-        bool success;
-        
-        // Utiliser un endpoint différent selon qu'il y a des images ou non
-        if (_controller.selectedImages.isEmpty) {
-          // Sans image: utiliser le nouvel endpoint PUT /absences/update/justification
-          // On combine le motif et le commentaire pour la justification
-          String justificationText = _motifController.text;
-          if (_commentaireController.text.isNotEmpty) {
-            justificationText += " - ${_commentaireController.text}";
-          }
-          
-          success = await _controller.updateJustification(
-            widget.absence.id,
-            justificationText,
-          );
-        } else {
-          // Avec images: utiliser l'ancien endpoint qui gère l'upload des fichiers
-          success = await _controller.envoyerJustification(
-            widget.absence.id,
-            _motifController.text,
-            _commentaireController.text,
-            _controller.selectedImages, 
-          );
-        }
+        // Utiliser la méthode qui enverra les URLs des images
+        final success = await _controller.envoyerJustification(
+          widget.absence.id,
+          _motifController.text,
+          _commentaireController.text,
+        );
 
         if (success) {
           Navigator.of(context).pop();
@@ -244,7 +230,7 @@ class _JustificationDialogState extends State<JustificationDialog> {
                       child: OutlinedButton.icon(
                         icon: const Icon(Icons.photo_library),
                         label: const Text('Galerie'),
-                        onPressed: _isSubmitting ? null : _pickImages,
+                        onPressed: (_isSubmitting || _isUploading) ? null : _pickImages,
                         style: OutlinedButton.styleFrom(
                           foregroundColor: ismBrown,
                         ),
@@ -255,7 +241,7 @@ class _JustificationDialogState extends State<JustificationDialog> {
                       child: OutlinedButton.icon(
                         icon: const Icon(Icons.camera_alt),
                         label: const Text('Appareil photo'),
-                        onPressed: _isSubmitting ? null : _pickImageFromCamera,
+                        onPressed: (_isSubmitting || _isUploading) ? null : _pickImageFromCamera,
                         style: OutlinedButton.styleFrom(
                           foregroundColor: ismBrown,
                         ),
@@ -265,7 +251,30 @@ class _JustificationDialogState extends State<JustificationDialog> {
                 ),
                 const SizedBox(height: 16),
 
-                // Affichage des images sélectionnées
+                // Message d'upload
+                if (_isUploading)
+                  const Center(
+                    child: Padding(
+                      padding: EdgeInsets.all(8.0),
+                      child: Column(
+                        children: [
+                          CircularProgressIndicator(
+                            valueColor: AlwaysStoppedAnimation<Color>(ismOrange),
+                          ),
+                          SizedBox(height: 8),
+                          Text(
+                            'Upload en cours...',
+                            style: TextStyle(
+                              fontStyle: FontStyle.italic,
+                              color: ismBrown,
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                  ),
+
+                // Affichage des images sélectionnées avec indicateur de succès
                 Obx(() {
                   if (_controller.selectedImages.isEmpty) {
                     return const Center(
@@ -282,52 +291,93 @@ class _JustificationDialogState extends State<JustificationDialog> {
                     );
                   }
 
-                  return SizedBox(
-                    height: 120,
-                    child: ListView.builder(
-                      scrollDirection: Axis.horizontal,
-                      itemCount: _controller.selectedImages.length,
-                      itemBuilder: (context, index) {
-                        return Stack(
-                          children: [
-                            Container(
-                              margin: const EdgeInsets.only(right: 8, top: 8, left: 2),
-                              width: 100,
-                              height: 100,
-                              decoration: BoxDecoration(
-                                borderRadius: BorderRadius.circular(8),
-                                image: DecorationImage(
-                                  image: _controller.getImageProvider(_controller.selectedImages[index]),
-                                  fit: BoxFit.cover,
-                                ),
-                                border: Border.all(color: Colors.grey.shade400),
-                              ),
+                  return Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      // Compteur d'URLs uploadées
+                      if (_controller.uploadedImageUrls.isNotEmpty)
+                        Padding(
+                          padding: const EdgeInsets.only(bottom: 8),
+                          child: Text(
+                            '${_controller.uploadedImageUrls.length} image(s) prête(s) à être envoyée(s)',
+                            style: const TextStyle(
+                              fontSize: 12,
+                              color: Colors.green,
+                              fontWeight: FontWeight.w500,
                             ),
-                            Positioned(
-                              top: 0,
-                              right: 0,
-                              child: InkWell(
-                                onTap: _isSubmitting ? null : () => _removeImage(index),
-                                child: Container(
-                                  padding: const EdgeInsets.all(2),
-                                  decoration: const BoxDecoration(
-                                    color: Colors.red,
-                                    shape: BoxShape.circle,
-                                  ),
-                                  child: const Icon(
-                                    Icons.close,
-                                    size: 16,
-                                    color: Colors.white,
+                          ),
+                        ),
+
+                      // Liste des images
+                      SizedBox(
+                        height: 120,
+                        child: ListView.builder(
+                          scrollDirection: Axis.horizontal,
+                          itemCount: _controller.selectedImages.length,
+                          itemBuilder: (context, index) {
+                            final bool isUploaded = index < _controller.uploadedImageUrls.length;
+                            return Stack(
+                              children: [
+                                Container(
+                                  margin: const EdgeInsets.only(right: 8, top: 8, left: 2),
+                                  width: 100,
+                                  height: 100,
+                                  decoration: BoxDecoration(
+                                    borderRadius: BorderRadius.circular(8),
+                                    image: DecorationImage(
+                                      image: _controller.getImageProvider(_controller.selectedImages[index]),
+                                      fit: BoxFit.cover,
+                                    ),
+                                    border: Border.all(
+                                      color: isUploaded ? Colors.green : Colors.grey.shade400,
+                                      width: isUploaded ? 2 : 1,
+                                    ),
                                   ),
                                 ),
-                              ),
-                            ),
-                          ],
-                        );
-                      },
-                    ),
+                                // Indicateur d'upload réussi
+                                if (isUploaded)
+                                  const Positioned(
+                                    bottom: 5,
+                                    right: 5,
+                                    child: CircleAvatar(
+                                      radius: 10,
+                                      backgroundColor: Colors.green,
+                                      child: Icon(
+                                        Icons.check,
+                                        color: Colors.white,
+                                        size: 12,
+                                      ),
+                                    ),
+                                  ),
+                                // Bouton de suppression
+                                Positioned(
+                                  top: 0,
+                                  right: 0,
+                                  child: InkWell(
+                                    onTap: (_isSubmitting || _isUploading) ? null : () => _removeImage(index),
+                                    child: Container(
+                                      padding: const EdgeInsets.all(2),
+                                      decoration: const BoxDecoration(
+                                        color: Colors.red,
+                                        shape: BoxShape.circle,
+                                      ),
+                                      child: const Icon(
+                                        Icons.close,
+                                        size: 16,
+                                        color: Colors.white,
+                                      ),
+                                    ),
+                                  ),
+                                ),
+                              ],
+                            );
+                          },
+                        ),
+                      ),
+                    ],
                   );
                 }),
+                
                 const SizedBox(height: 24),
 
                 // Boutons d'actions
@@ -335,7 +385,7 @@ class _JustificationDialogState extends State<JustificationDialog> {
                   mainAxisAlignment: MainAxisAlignment.end,
                   children: [
                     TextButton(
-                      onPressed: _isSubmitting
+                      onPressed: (_isSubmitting || _isUploading)
                           ? null
                           : () {
                               _controller.clearSelectedImages();
@@ -345,7 +395,7 @@ class _JustificationDialogState extends State<JustificationDialog> {
                     ),
                     const SizedBox(width: 12),
                     ElevatedButton(
-                      onPressed: _isSubmitting ? null : _soumettreJustification,
+                      onPressed: (_isSubmitting || _isUploading) ? null : _soumettreJustification,
                       style: ElevatedButton.styleFrom(
                         backgroundColor: ismOrange,
                       ),

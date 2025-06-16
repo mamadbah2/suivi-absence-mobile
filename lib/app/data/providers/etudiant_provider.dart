@@ -1,5 +1,6 @@
 import 'package:get/get.dart';
 import 'package:http/http.dart' as http;
+import 'package:http_parser/http_parser.dart'; // Pour MediaType
 import 'dart:convert';
 import 'dart:math';
 import '../models/absence.dart';
@@ -302,22 +303,27 @@ class EtudiantProvider extends GetxController {
       
       if (_useSimulation) {
         print("Mode simulation activé: simulation de la soumission de justification avec ${images.length} images");
-        // Pause pour simuler le temps de traitement
         await Future.delayed(const Duration(seconds: 1));
         return true;
       }
 
-      // Utiliser http.MultipartRequest pour envoyer les fichiers
-      final request = http.MultipartRequest(
-        'POST',
-        Uri.parse('$baseUrl/absences/justifier-avec-images'),
-      );
-      
       // Obtenir les en-têtes avec le token JWT
       final headers = await _getHeaders();
-      request.headers.addAll(headers);
       
-      // Ajouter les champs textuels
+      // Création de la requête multipart
+      final request = http.MultipartRequest(
+        'POST',
+        Uri.parse('$baseUrl/absences/mobiles/justification/upload'),
+      );
+      
+      // Ajout des headers (sauf Content-Type qui est géré automatiquement par MultipartRequest)
+      headers.forEach((key, value) {
+        if (key != 'Content-Type') {
+          request.headers[key] = value;
+        }
+      });
+      
+      // Ajout des champs textuels
       request.fields['absenceId'] = absenceId;
       request.fields['motif'] = motif;
       request.fields['commentaire'] = commentaire;
@@ -325,21 +331,30 @@ class EtudiantProvider extends GetxController {
       // Ajouter chaque image comme fichier multipart
       for (int i = 0; i < images.length; i++) {
         final file = images[i];
-        final filename = 'justificatif_${i + 1}_${DateTime.now().millisecondsSinceEpoch}.jpg';
-        final fileStream = http.ByteStream(file.openRead());
-        final fileLength = await file.length();
-        
-        final multipartFile = http.MultipartFile(
-          'images', // Nom du champ pour le fichier (doit correspondre à ce que le backend attend)
-          fileStream,
-          fileLength,
-          filename: filename,
-        );
-        
-        request.files.add(multipartFile);
+        try {
+          // Lecture des octets de l'image
+          final bytes = await file.readAsBytes();
+          
+          final filename = 'justificatif_${i + 1}_${DateTime.now().millisecondsSinceEpoch}.jpg';
+          
+          final multipartFile = http.MultipartFile.fromBytes(
+            'files', // Nom du champ pour le fichier (doit correspondre à ce que le backend attend)
+            bytes,
+            filename: filename,
+            contentType: MediaType('image', 'jpeg'),
+          );
+          
+          request.files.add(multipartFile);
+          print("Image $filename ajoutée à la requête");
+        } catch (e) {
+          print("Erreur lors de la lecture de l'image ${i+1}: $e");
+          // Continuer avec les autres images
+        }
       }
       
-      // Envoyer la requête
+      print("Envoi de la requête à ${request.url}");
+      
+      // Envoi de la requête
       final streamedResponse = await request.send().timeout(
         const Duration(seconds: 30),
         onTimeout: () {
@@ -350,6 +365,9 @@ class EtudiantProvider extends GetxController {
       
       // Convertir la réponse en http.Response pour traitement
       final response = await http.Response.fromStream(streamedResponse);
+      
+      print("Code de statut: ${response.statusCode}");
+      print("Réponse du serveur: ${response.body}");
       
       if (response.statusCode != 200 && response.statusCode != 201) {
         print("Erreur API: ${response.statusCode}");
@@ -670,5 +688,111 @@ class EtudiantProvider extends GetxController {
         salle: 'Salle 104',
       ),
     ];
+  }
+  
+  // Soumet une justification avec les URLs des images stockées sur Supabase
+  Future<bool> soumettreJustificationAvecUrls(
+      String absenceId, String motif, String commentaire, List<String> imageUrls) async {
+    try {
+      print("📩 ---- ENVOI DE JUSTIFICATION AU BACKEND ----");
+      print("📝 Absence ID: $absenceId");
+      print("📝 Commentaire: $commentaire");
+      print("🖼️ Nombre d'URLs d'images: ${imageUrls.length}");
+      
+      // Afficher chaque URL d'image
+      if (imageUrls.isNotEmpty) {
+        print("🖼️ Liste des URLs d'images:");
+        for (int i = 0; i < imageUrls.length; i++) {
+          print("   ${i+1}. ${imageUrls[i]}");
+        }
+      } else {
+        print("⚠️ ATTENTION: Aucune URL d'image à envoyer!");
+      }
+      
+      if (_useSimulation) {
+        print("🧪 Mode simulation activé: simulation de la soumission de justification avec ${imageUrls.length} URLs");
+        await Future.delayed(const Duration(milliseconds: 800));
+        return true;
+      }
+      
+      // Obtenir les en-têtes avec le token JWT
+      final headers = await _getHeaders();
+      print("🔑 Token d'authentification récupéré");
+      
+      // Création du corps de la requête en JSON - Attention à utiliser la structure attendue par le backend
+      final Map<String, dynamic> jsonBody = {
+        'absenceId': absenceId,
+        'commentaireEtudiant': commentaire,
+        'motif': motif, // S'assurer d'inclure le motif s'il est requis par l'API
+        'imageUrls': imageUrls, // Envoi direct des URLs comme tableau JSON
+      };
+      
+      print("📤 Corps de la requête JSON:");
+      print(jsonEncode(jsonBody));
+      
+      // Envoi au format JSON
+      final response = await http.post(
+        Uri.parse('$baseUrl/absences/mobiles/justification/upload'),
+        headers: headers, // Les headers incluent déjà 'Content-Type': 'application/json'
+        body: jsonEncode(jsonBody),
+      ).timeout(
+        const Duration(seconds: 30),
+        onTimeout: () {
+          print("⏱️ Timeout lors de l'envoi de la justification");
+          throw Exception("Timeout lors de l'envoi de la justification");
+        }
+      );
+      
+      print("📥 Réponse reçue - Code de statut: ${response.statusCode}");
+      print("📄 Réponse du serveur: ${response.body}");
+      
+      if (response.statusCode == 200 || response.statusCode == 201) {
+        print("✅ Justification avec URLs envoyée avec succès");
+        return true;
+      }
+      
+      // Si on arrive ici, c'est qu'il y a eu une erreur
+      print("❌ Erreur API: ${response.statusCode}");
+      print("❌ Détails: ${response.body}");
+      
+      // Si le serveur a rejeté la requête JSON, essayons un autre format, peut-être un simple formulaire
+      if (response.statusCode == 415 || response.statusCode == 400) {
+        print("⚠️ Tentative alternative avec un format de formulaire simple...");
+        
+        // Création d'un simple formulaire URL-encoded
+        final Map<String, String> formBody = {
+          'absenceId': absenceId,
+          'commentaireEtudiant': commentaire,
+          'motif': motif,
+        };
+        
+        // Ajouter les URLs d'images au formulaire
+        for (int i = 0; i < imageUrls.length && i < 5; i++) {
+          formBody['imageUrls[$i]'] = imageUrls[i];
+        }
+        
+        // Changer le header Content-Type pour URL-encoded
+        headers['Content-Type'] = 'application/x-www-form-urlencoded';
+        
+        final alternativeResponse = await http.post(
+          Uri.parse('$baseUrl/absences/mobiles/justification/upload'),
+          headers: headers,
+          body: formBody, // Envoyer comme form URL-encoded
+        );
+        
+        print("📥 Réponse alternative - Code: ${alternativeResponse.statusCode}");
+        print("📄 Réponse: ${alternativeResponse.body}");
+        
+        if (alternativeResponse.statusCode == 200 || alternativeResponse.statusCode == 201) {
+          print("✅ Justification avec URLs envoyée avec succès (format alternatif)");
+          return true;
+        }
+      }
+      
+      return false;
+    } catch (e) {
+      print("❌ Exception lors de la soumission de justification avec URLs: $e");
+      return false;
+    }
   }
 }
